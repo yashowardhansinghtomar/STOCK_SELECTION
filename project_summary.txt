@@ -1,0 +1,1480 @@
+Project Structure & Python File Details for: Y:\Trading\Stock Selection
+
+🧠 Detected Data Access Points:
+• aaa.py → load_data('None', default)
+• aaa.py → load_data('None', default)
+• agents/execution_agent_sql.py → load_data('None', default)
+• agents/memory_agent.py → load_data('None', default)
+• agents/memory_agent.py → load_data('None', default)
+• agents/memory_agent.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → load_data('None', default)
+• agents/planner_agent_sql.py → save_data('None', default)
+• agents/strategy_agent.py → load_data('None', default)
+• agents/strategy_agent.py → load_data('stock_price_history', default)
+• agents/time_series_agent.py → load_data('None', default)
+• core/data_provider.py → save_data('None', default)
+• core/time_context.py → load_data('stock_price_history', default)
+• data_pipeline/zerodha_to_postgres.py → load_data('None', default)
+• data_pipeline/zerodha_to_postgres.py → save_data('None', default)
+• diagnosis/evaluate_model_curves.py → load_data('None', default)
+• diagnosis/evaluate_model_curves.py → load_data('None', default)
+• diagnosis/view_predicted_curves.py → load_data('None', default)
+• diagnosis/view_predicted_curves.py → load_data('None', default)
+• flows/auto_pipeline.py → load_data('None', default)
+• flows/auto_pipeline.py → load_data('None', default)
+• flows/auto_pipeline.py → save_data('None', default)
+• flows/fundamental_pipeline.py → load_data('None', default)
+• flows/fundamental_pipeline.py → load_data('None', default)
+• flows/fundamental_pipeline.py → save_data('None', default)
+• flows/trading_pipeline.py → load_data('None', default)
+• flows/trading_pipeline.py → load_data('None', default)
+• fundamentals/fundamental_data_extractor.py → load_data('None', default)
+• fundamentals/fundamental_data_extractor.py → save_data('None', default)
+• models/meta_strategy_selector.py → save_data('None', default)
+• models/ml_dual_model_prediction_sql.py → load_data('None', default)
+• models/ml_dual_model_prediction_sql.py → load_data('None', default)
+• models/ml_training_sql.py → load_data('None', default)
+• models/ml_training_sql.py → save_data('None', default)
+• models/stock_filter_predictor.py → load_data('None', default)
+• models/stock_filter_predictor.py → save_data('None', default)
+• models/train_dual_model_sql.py → load_data('None', default)
+• models/train_exit_model.py → load_data('paper_trades', default)
+• models/train_exit_model.py → save_data('None', default)
+• models/train_stock_filter_model.py → load_data('training_data', default)
+• predictive_trader/backtest_lstm_predictor.py → load_data('stock_features', default)
+• predictive_trader/curve_signal_generator.py → load_data('None', default)
+• predictive_trader/model_manager.py → load_data('stock_price_history', default)
+• predictive_trader/price_predictor_lgbm.py → load_data('stock_price_history', default)
+• predictive_trader/price_predictor_lstm.py → load_data('stock_price_history', default)
+• predictive_trader/price_predictor_lstm_v2.py → load_data('stock_features', default)
+• predictive_trader/price_predictor_lstm_v2.py → load_data('stock_features', default)
+• report_generator.py → load_data('None', default)
+• scripts/__archive__/execution_agent.py → load_data('open_positions', default)
+• scripts/__archive__/execution_agent.py → load_data('recommendations', default)
+• scripts/__archive__/execution_agent.py → save_data('None', default)
+• scripts/__archive__/planner_agent.py → load_data('ml_selected_stocks', default)
+• scripts/__archive__/planner_agent.py → save_data('None', default)
+• scripts/load_backup_fundamentals.py → save_data('None', default)
+• scripts/seed_training_data.py → load_data('paper_trades', default)
+• scripts/seed_training_data.py → load_data('stock_features', default)
+• scripts/seed_training_data.py → save_data('None', default)
+• services/feedback_loop.py → load_data('None', default)
+• services/feedback_loop.py → load_data('None', default)
+• services/feedback_loop.py → save_data('None', default)
+• stock_selecter/auto_filter_selector.py → load_data('None', default)
+• stock_selecter/fallback_technical_filter.py → load_data('None', default)
+• stock_selecter/fallback_technical_filter.py → save_data('None', default)
+• stock_selecter/stock_screener.py → load_data('None', default)
+• stock_selecter/stock_screener.py → load_data('None', default)
+• stock_selecter/stock_screener.py → save_data('None', default)
+• utils/precheck_features.py → load_data('None', default)
+• utils/precheck_features.py → load_data('None', default)
+• utils/stock_health_precheck.py → load_data('None', default)
+
+📁 Full Directory Summary with Code Info:
+└── Stock Selection
+    📄 Skipped 2 data files (.csv, .json, .pyc)
+    ├── __pycache__/  [directory excluded]
+    ├── aaa.py
+    │   Imports:
+    │     - core.config.settings
+    │     - core.data_provider.load_data
+    │     - core.time_context.get_simulation_date
+    │     - pandas
+    ├── agents
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── execution_agent_sql.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.fetch_stock_data
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - datetime.datetime
+    │   │     - db.conflict_utils.insert_with_conflict_handling
+    │   │     - db.postgres_manager.run_query
+    │   │     - os
+    │   │     - pandas
+    │   │     - time
+    │   │   Class: ExecutionAgentSQL
+    │   │     Methods:
+    │   │       - __init__
+    │   │       - load_signals
+    │   │       - load_open_positions
+    │   │       - load_today_ohlc
+    │   │       - exit_trades
+    │   │       - enter_trades
+    │   │       - run
+    │   │   Function: safe_load_table
+    │   ├── memory_agent.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - core.model_io.save_model
+    │   │     - core.time_context.get_simulation_date
+    │   │     - datetime.datetime
+    │   │     - db.conflict_utils.insert_with_conflict_handling
+    │   │     - db.postgres_manager.run_query
+    │   │     - models.meta_strategy_selector.train_meta_model
+    │   │     - models.train_dual_model_sql.train_dual_model
+    │   │     - models.train_exit_model.train_exit_model
+    │   │     - models.train_stock_filter_model.train_stock_filter_model
+    │   │     - pandas
+    │   │     - pandas.tseries.offsets.BDay
+    │   │   Class: MemoryAgent
+    │   │     Methods:
+    │   │       - __init__
+    │   │       - archive_table
+    │   │       - summarize_weekly_performance
+    │   │       - check_retraining_needed
+    │   │       - feedback_loop
+    │   │         Docstring:
+    │   │         Merge features with today's trades (using previous business-
+    │   │         day features) and upsert into training_data.
+    │   │       - update
+    │   ├── planner_agent_sql.py
+    │   │   Imports:
+    │   │     - agents.execution_agent_sql.ExecutionAgentSQL
+    │   │     - agents.memory_agent.MemoryAgent
+    │   │     - agents.risk_management_agent.RiskManagementAgent
+    │   │     - agents.signal_arbitration_agent.SignalArbitrationAgent
+    │   │     - agents.strategy_agent.StrategyAgent
+    │   │     - core.config.settings
+    │   │     - core.data_provider.fetch_stock_data
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - core.time_context.get_simulation_date
+    │   │     - datetime.datetime
+    │   │     - db.conflict_utils.insert_with_conflict_handling
+    │   │     - db.db.SessionLocal
+    │   │     - db.db.engine
+    │   │     - db.models.Base
+    │   │     - db.postgres_manager.run_query
+    │   │     - fundamentals.fundamental_data_extractor
+    │   │     - numpy
+    │   │     - pandas
+    │   │     - random
+    │   │     - sqlalchemy.text
+    │   │     - stock_selecter.auto_filter_selector.auto_select_filter
+    │   │     - tqdm.tqdm
+    │   │     - warnings
+    │   │   Class: PlannerAgentSQL
+    │   │     Methods:
+    │   │       - __init__
+    │   │       - run_weekly_routine
+    │   │       - _fetch_fundamentals
+    │   │       - _fetch_price_history
+    │   │       - _refresh_features
+    │   │       - _filter_stocks
+    │   │       - _evaluate_stocks
+    │   │       - _execute_trades
+    │   │       - _update_systems
+    │   ├── portfolio_allocator.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - core.logger.logger
+    │   │     - pandas
+    │   │   Class: PortfolioAllocatorAgent
+    │   │     Methods:
+    │   │       - __init__
+    │   │       - allocate
+    │   ├── risk_management_agent.py
+    │   │   Imports:
+    │   │     - core.logger.logger
+    │   │     - pandas
+    │   │   Class: RiskManagementAgent
+    │   │     Methods:
+    │   │       - __init__
+    │   │       - apply_risk_controls
+    │   ├── signal_arbitration_agent.py
+    │   │   Imports:
+    │   │     - core.logger.logger
+    │   │     - numpy
+    │   │   Class: SignalArbitrationAgent
+    │   │     Methods:
+    │   │       - __init__
+    │   │       - arbitrate
+    │   ├── strategy_agent.py
+    │   │   Imports:
+    │   │     - agents.time_series_agent.TimeSeriesAgent
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.grid_predictor.predict_grid_config
+    │   │     - core.logger.logger
+    │   │     - core.model_io.load_model
+    │   │     - core.predictor.predict_dual_model
+    │   │     - core.skiplist.add_to_skiplist
+    │   │     - datetime.datetime
+    │   │     - db.db.SessionLocal
+    │   │     - db.models.ParamModelPrediction
+    │   │     - db.models.StockFeature
+    │   │     - pandas
+    │   │     - random
+    │   │     - sqlalchemy.orm.Session
+    │   │     - traceback
+    │   │   Class: StrategyAgent
+    │   │     Methods:
+    │   │       - __init__
+    │   │       - fetch_features
+    │   │       - evaluate
+    │   │       - _handle_grid_fallback
+    │   │       - log_summary
+    │   │   Function: is_valid_for_model
+    │   └── time_series_agent.py
+    │       Imports:
+    │         - core.config.settings
+    │         - core.data_provider.load_data
+    │         - core.logger.logger
+    │         - core.model_io.load_model
+    │         - core.model_io.save_model
+    │         - datetime.timedelta
+    │         - numpy
+    │         - pandas
+    │         - pmdarima.arima.ARIMA
+    │         - traceback
+    │         - warnings
+    │       Class: TimeSeriesAgent
+    │         Methods:
+    │           - __init__
+    │           - _get_hist
+    │           - train_and_store
+    │           - predict
+    │       Function: warning_to_log
+    ├── cache
+    │   📄 Skipped 1 data files (.csv, .json, .pyc)
+    │   └── fundamentals
+    ├── config
+    │   📄 Skipped 1 data files (.csv, .json, .pyc)
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── paths.py
+    │   │   Imports:
+    │   │     - pathlib.Path
+    │   ├── postgres_config.py
+    │   │   Imports:
+    │   │     - os
+    │   │   Function: get_pg_conn_params
+    │   ├── sql_tables.py
+    │   └── system_config.py
+    ├── core
+    │   ├── __init__.py
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── backtest_bt.py
+    │   │   Imports:
+    │   │     - backtesting.Backtest
+    │   │     - backtesting.Strategy
+    │   │     - backtesting.lib.crossover
+    │   │     - core.config.settings
+    │   │     - core.data_provider.fetch_stock_data
+    │   │     - pandas
+    │   │   Class: SMA_RSI
+    │   │     Docstring:
+    │   │     SMA crossover entry with RSI‐based exit.
+    │   │     Methods:
+    │   │       - init
+    │   │       - next
+    │   │   Function: ta_sma
+    │   │   Function: ta_rsi
+    │   │   Function: run_backtest
+    │   │     Docstring:
+    │   │     Fetch OHLCV data, run the SMA_RSI strategy, and return
+    │   │     performance stats.
+    │   ├── config.py
+    │   │   Imports:
+    │   │     - pathlib.Path
+    │   │     - pydantic.BaseModel
+    │   │     - pydantic.Field
+    │   │     - pydantic.SecretStr
+    │   │     - pydantic_settings.BaseSettings
+    │   │     - typing.ClassVar
+    │   │     - typing.Dict
+    │   │     - typing.List
+    │   │     - typing.Optional
+    │   │     - typing.Tuple
+    │   │   Class: RetrainConfig
+    │   │   Class: Settings
+    │   │   Class: Config
+    │   ├── data_cleaner.py
+    │   │   Imports:
+    │   │     - core.logger.logger
+    │   │     - pandas
+    │   │   Function: normalize_columns
+    │   │   Function: sanity_check_features
+    │   ├── data_initializer.py
+    │   │   Imports:
+    │   │     - core.data_provider.fetch_stock_data
+    │   │     - core.logger.logger
+    │   │     - db.conflict_utils.insert_with_conflict_handling
+    │   │     - db.postgres_manager.read_table
+    │   │     - integrations.zerodha_fetcher.fetch_historical_data
+    │   │     - os
+    │   │     - pandas
+    │   │   Function: ensure_price_history_prefilled
+    │   │     Docstring:
+    │   │     Ensures price history is populated in SQL for selected
+    │   │     stocks in stock_fundamentals. Uses whitelist if provided.
+    │   │     Skips if enough data is already present.
+    │   ├── data_provider.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.logger.logger
+    │   │     - datetime.datetime
+    │   │     - db.conflict_utils.insert_with_conflict_handling
+    │   │     - db.db.SessionLocal
+    │   │     - db.models.Instrument
+    │   │     - db.models.MLSelectedStock
+    │   │     - db.models.OpenPosition
+    │   │     - db.models.PaperTrade
+    │   │     - db.models.Recommendation
+    │   │     - db.models.SkiplistStock
+    │   │     - db.models.StockEncoding
+    │   │     - db.models.StockFeature
+    │   │     - db.models.StockFundamental
+    │   │     - db.models.StockPriceHistory
+    │   │     - integrations.zerodha_fetcher.fetch_historical_data
+    │   │     - pandas
+    │   │     - typing.Any
+    │   │     - typing.List
+    │   │     - typing.Optional
+    │   │   Function: load_data
+    │   │   Function: save_data
+    │   │   Function: fetch_stock_data
+    │   │   Function: get_last_close
+    │   │   Function: delete_cached_features
+    │   │   Function: list_partitions
+    │   ├── grid_predictor.py
+    │   │   Imports:
+    │   │     - backtesting.Backtest
+    │   │     - backtesting.backtesting
+    │   │     - core.backtest_bt.SMA_RSI
+    │   │     - core.data_provider.fetch_stock_data
+    │   │     - core.logger.logger
+    │   │     - core.time_context.get_simulation_date
+    │   │     - datetime.datetime
+    │   │     - db.postgres_manager.run_query
+    │   │     - multiprocessing
+    │   │   Function: predict_grid_config
+    │   │   Function: persist_grid_recommendations
+    │   ├── logger.py
+    │   │   Imports:
+    │   │     - datetime.datetime
+    │   │     - logging
+    │   │     - os
+    │   │     - sys
+    │   │   Class: SafeFormatter
+    │   │     Methods:
+    │   │       - format
+    │   │   Function: success
+    │   │   Function: warn
+    │   │   Function: error
+    │   │   Function: start
+    │   ├── model_io.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.logger.logger
+    │   │     - datetime.datetime
+    │   │     - db.conflict_utils.insert_with_conflict_handling
+    │   │     - db.postgres_manager.run_query
+    │   │     - pandas
+    │   │     - pickle
+    │   │   Function: save_model
+    │   │     Docstring:
+    │   │     Serialize and save a model to the configured SQL table using
+    │   │     conflict handling.
+    │   │   Function: load_model
+    │   │     Docstring:
+    │   │     Load a model from the configured SQL table.
+    │   ├── predictor.py
+    │   │   Imports:
+    │   │     - agents.signal_arbitration_agent.SignalArbitrationAgent
+    │   │     - core.config.settings
+    │   │     - core.model_io.load_model
+    │   │     - core.time_context.get_simulation_date
+    │   │     - db.conflict_utils.insert_with_conflict_handling
+    │   │     - models.ml_dual_model_prediction_sql.predict_dual_model
+    │   │     - pandas
+    │   │   Function: predict_dual_model
+    │   │     Docstring:
+    │   │     Predicts if a trade should be triggered and its expected
+    │   │     return.  Returns a list of dicts:   [{      "stock":
+    │   │     <symbol>,      "trade_triggered": <0|1>,
+    │   │     "predicted_return": <float>,      "recommended_config":
+    │   │     <dict of feature:value>   }]
+    │   ├── skiplist.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.logger.logger
+    │   │     - db.postgres_manager.run_query
+    │   │   Function: is_in_skiplist
+    │   │   Function: add_to_skiplist
+    │   │   Function: remove_from_skiplist
+    │   ├── time_context.py
+    │   │   Imports:
+    │   │     - core.data_provider.load_data
+    │   │     - datetime.datetime
+    │   │     - os
+    │   │     - pandas
+    │   │     - pandas.tseries.offsets.BDay
+    │   │   Function: get_simulation_date
+    │   │     Docstring:
+    │   │     Return SIMULATED_DATE from env or fallback to latest
+    │   │     available date in price history.
+    │   │   Function: set_simulation_date
+    │   │   Function: clear_simulation_date
+    │   ├── token_manager.py
+    │   │   Imports:
+    │   │     - json
+    │   │     - os
+    │   │     - pathlib.Path
+    │   │   Function: save_access_token
+    │   │   Function: load_access_token
+    │   │   Function: get_saved_access_token
+    │   └── validation
+    │       ├── __init__.py
+    │       ├── __pycache__/  [directory excluded]
+    │       └── data_checks.py
+    │           Imports:
+    │             - numpy
+    │             - pandas
+    │             - scipy.stats.zscore
+    │           Function: check_missing
+    │           Function: class_balance
+    │           Function: detect_outliers
+    ├── create_daily_features.sql
+    ├── data
+    │   📄 Skipped 1 data files (.csv, .json, .pyc)
+    ├── data_pipeline
+    │   ├── __pycache__/  [directory excluded]
+    │   └── zerodha_to_postgres.py
+    │       Imports:
+    │         - core.data_provider.load_data
+    │         - core.data_provider.save_data
+    │         - core.logger.logger
+    │         - datetime.datetime
+    │         - datetime.timedelta
+    │         - db.postgres_manager.run_query
+    │         - integrations.zerodha_fetcher.fetch_historical_data
+    │         - os
+    │         - pandas
+    │         - time
+    │       Function: load_stock_list
+    │       Function: fetch_and_save_stock
+    │       Function: main
+    ├── db
+    │   ├── __init__.py
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── conflict_utils.py
+    │   │   Imports:
+    │   │     - db.db.engine
+    │   │     - db.models.Base
+    │   │     - pandas
+    │   │     - sqlalchemy.dialects.postgresql.insert
+    │   │   Function: insert_with_conflict_handling
+    │   │     Docstring:
+    │   │     Bulk insert DataFrame into Postgres with ON CONFLICT
+    │   │     handling via SQLAlchemy Core.
+    │   ├── csv_to_sql.py
+    │   │   Imports:
+    │   │     - db.db_router.insert_dataframe
+    │   │     - pandas
+    │   │     - pathlib.Path
+    │   │     - sys
+    │   │   Function: csv_to_sql
+    │   ├── db.py
+    │   │   Imports:
+    │   │     - config.postgres_config.get_pg_conn_params
+    │   │     - core.config.settings
+    │   │     - sqlalchemy.create_engine
+    │   │     - sqlalchemy.orm.sessionmaker
+    │   │   Function: get_session
+    │   │     Docstring:
+    │   │     Returns a new SQLAlchemy Session. Usage:     with
+    │   │     get_session() as session:         ...
+    │   ├── db_manager.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.logger.logger
+    │   │     - pandas
+    │   │     - sqlite3
+    │   │     - time
+    │   │   Function: get_connection
+    │   │     Docstring:
+    │   │     Block until connection is possible and WAL is enabled.
+    │   │   Function: insert_dataframe
+    │   │   Function: read_table
+    │   │   Function: run_query
+    │   │   Function: list_tables
+    │   │   Function: execute_raw_sql
+    │   │   Function: enable_wal_mode
+    │   ├── init_postgres.py
+    │   │   Imports:
+    │   │     - db.postgres_manager.execute_raw_sql
+    │   │     - db.postgres_manager.run_query
+    │   │   Function: table_exists
+    │   │   Function: init_postgres
+    │   ├── models.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - datetime.date
+    │   │     - datetime.datetime
+    │   │     - sqlalchemy.BigInteger
+    │   │     - sqlalchemy.Boolean
+    │   │     - sqlalchemy.Column
+    │   │     - sqlalchemy.Date
+    │   │     - sqlalchemy.DateTime
+    │   │     - sqlalchemy.Float
+    │   │     - sqlalchemy.Integer
+    │   │     - sqlalchemy.String
+    │   │     - sqlalchemy.orm.declarative_base
+    │   │   Class: Instrument
+    │   │   Class: SkiplistStock
+    │   │   Class: StockPriceHistory
+    │   │   Class: StockFeature
+    │   │   Class: StockFundamental
+    │   │   Class: StockEncoding
+    │   │   Class: Recommendation
+    │   │   Class: OpenPosition
+    │   │   Class: PaperTrade
+    │   │   Class: FilterModelPrediction
+    │   │   Class: ParamModelPrediction
+    │   │   Class: PriceModelPrediction
+    │   │   Class: MLSelectedStock
+    │   │     Methods:
+    │   │       - __repr__
+    │   └── postgres_manager.py
+    │       Imports:
+    │         - config.postgres_config.get_pg_conn_params
+    │         - pandas
+    │         - sqlalchemy.create_engine
+    │         - sqlalchemy.text
+    │       Function: get_engine
+    │       Function: read_table
+    │       Function: run_query
+    │       Function: execute_raw_sql
+    │       Function: insert_dataframe
+    │         Docstring:
+    │         Bulk-insert a DataFrame into a PostgreSQL table using
+    │         SQLAlchemy.
+    ├── diagnosis
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── clear_all_sql_tables.py
+    │   │   Imports:
+    │   │     - core.logger.logger
+    │   │     - db.db_router.execute_raw_sql
+    │   │   Function: clear_all_tables
+    │   ├── diagnose_storage.py
+    │   │   Imports:
+    │   │     - core.data_provider.load_data
+    │   │     - os
+    │   │     - pathlib.Path
+    │   │     - sqlite3
+    │   │   Function: table_exists
+    │   ├── evaluate_model_curves.py
+    │   │   Imports:
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - matplotlib.pyplot
+    │   │     - numpy
+    │   │     - pandas
+    │   │     - sklearn.metrics.mean_absolute_error
+    │   │     - sklearn.metrics.mean_squared_error
+    │   │   Function: load_predictions
+    │   │   Function: load_actual_prices
+    │   │   Function: evaluate_model
+    │   ├── fix_model_path_usage.py
+    │   │   Imports:
+    │   │     - pathlib.Path
+    │   │     - re
+    │   │   Function: fix_file
+    │   │   Function: main
+    │   ├── migrate_paths_to_sql.py
+    │   │   Imports:
+    │   │     - argparse
+    │   │     - os
+    │   │     - pathlib.Path
+    │   │     - re
+    │   │   Function: transform_code
+    │   │   Function: update_file
+    │   │   Function: run_all
+    │   ├── migrate_to_sql.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - db.db_router.DB_PATH
+    │   │     - db.db_router.insert_dataframe
+    │   │     - os
+    │   │     - pandas
+    │   │     - pickle
+    │   │     - sqlite3
+    │   │   Function: ensure_blob_json_tables
+    │   │     Docstring:
+    │   │     Create the blob and JSON store tables if they don't exist.
+    │   │   Function: migrate_csv
+    │   │   Function: migrate_pkl
+    │   │   Function: migrate_json
+    │   │   Function: migrate_to_sql
+    │   ├── seed_training_data.py
+    │   │   Imports:
+    │   │     - core.logger.logger
+    │   │     - db.db_router.insert_dataframe
+    │   │     - pandas
+    │   │   Function: seed
+    │   ├── simulate_execution.py
+    │   │   Imports:
+    │   │     - agents.execution_agent_sql.ExecutionAgentSQL
+    │   │     - core.logger.logger
+    │   │     - core.time_context.clear_simulation_date
+    │   │     - core.time_context.set_simulation_date
+    │   │     - datetime.datetime
+    │   │     - datetime.timedelta
+    │   │     - predictive_trader.curve_predictor.generate_curves_for_list
+    │   │     - predictive_trader.curve_signal_generator.generate_signals_from_curves
+    │   │   Function: generate_trading_days
+    │   │   Function: simulate_trading_days
+    │   ├── simulate_history.py
+    │   │   Imports:
+    │   │     - agents.planner_agent_sql.PlannerAgentSQL
+    │   │     - argparse
+    │   │     - core.logger.logger
+    │   │     - core.time_context.set_simulation_date
+    │   │     - datetime.datetime
+    │   │     - datetime.timedelta
+    │   │     - logging
+    │   │     - os
+    │   │   Function: daterange
+    │   │     Docstring:
+    │   │     Yield one date per week between start and end.
+    │   │   Function: parse_args
+    │   │   Function: main
+    │   ├── simulate_history_single.py
+    │   │   Imports:
+    │   │     - agents.planner_agent_sql.PlannerAgentSQL
+    │   │     - argparse
+    │   │     - core.logger.logger
+    │   │     - core.time_context.set_simulation_date
+    │   │     - datetime.datetime
+    │   │     - datetime.timedelta
+    │   │     - pandas
+    │   │   Function: simulate_stock_over_range
+    │   └── view_predicted_curves.py
+    │       Imports:
+    │         - core.data_provider.load_data
+    │         - core.logger.logger
+    │         - matplotlib.pyplot
+    │         - numpy
+    │         - pandas
+    │         - sklearn.metrics.mean_absolute_error
+    │         - sklearn.metrics.mean_squared_error
+    │       Function: load_predictions
+    │       Function: load_actual_prices
+    │       Function: evaluate_model
+    ├── flows
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── auto_pipeline.py
+    │   │   Imports:
+    │   │     - agents.memory_agent.MemoryAgent
+    │   │     - archive.feature_enricher.enrich_features
+    │   │     - argparse
+    │   │     - core.backtest_bt.run_backtest
+    │   │     - core.config.settings
+    │   │     - core.data_provider.fetch_stock_data
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - datetime.date
+    │   │     - datetime.timedelta
+    │   │     - db.db.get_session
+    │   │     - models.meta_strategy_selector.train_meta_model
+    │   │     - models.stock_filter_predictor.run_stock_filter
+    │   │     - models.train_dual_model_sql.train_dual_model
+    │   │     - models.train_stock_filter_model.train_stock_filter_model
+    │   │     - prefect.flow
+    │   │     - prefect.get_run_logger
+    │   │     - prefect.server.schemas.schedules.IntervalSchedule
+    │   │     - prefect.task
+    │   │     - services.feedback_loop.update_training_data
+    │   │     - sqlalchemy.text
+    │   │   Function: get_last_date
+    │   │   Function: update_last_date
+    │   │   Function: ingest_data
+    │   │   Function: enrich
+    │   │   Function: run_filter
+    │   │   Function: backtest_and_label
+    │   │   Function: check_drift_and_trigger
+    │   │   Function: retrain_models
+    │   │   Function: self_learning_pipeline
+    │   ├── backfill_pipeline.py
+    │   │   Imports:
+    │   │     - argparse
+    │   │     - datetime.date
+    │   │     - datetime.timedelta
+    │   │     - flows.auto_pipeline.self_learning_pipeline
+    │   │     - prefect.flow
+    │   │   Function: historical_backfill
+    │   ├── fundamental_pipeline.py
+    │   │   Imports:
+    │   │     - argparse
+    │   │     - bs4.BeautifulSoup
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - core.logger.logger
+    │   │     - core.skiplist.add_to_skiplist
+    │   │     - core.skiplist.is_in_skiplist
+    │   │     - db.postgres_manager.run_query
+    │   │     - numpy
+    │   │     - os
+    │   │     - pandas
+    │   │     - pathlib.Path
+    │   │     - prefect.flow
+    │   │     - prefect.get_run_logger
+    │   │     - prefect.task
+    │   │     - requests
+    │   │     - time
+    │   │     - yfinance
+    │   │   Function: load_nse_symbols
+    │   │   Function: is_cache_valid
+    │   │   Function: save_local_cache
+    │   │   Function: clear_sql_table
+    │   │   Function: clear_local_cache
+    │   │   Function: _scrape_screener
+    │   │   Function: _fetch_yfinance
+    │   │   Function: fetch_fundamentals
+    │   │   Function: parse_fundamentals
+    │   │   Function: clear_everything
+    │   │   Function: get_todo_symbols
+    │   │   Function: fetch_one
+    │   │   Function: save_batch
+    │   │   Function: fundamental_fetch_flow
+    │   │     Docstring:
+    │   │     1) Optionally clear out everything if --force 2) Figure out
+    │   │     which symbols still need data 3) Fan out one task per symbol
+    │   │     (up to your concurrency limit) 4) Persist the successful
+    │   │     rows back into SQL 5) On subsequent Prefect runs you’ll only
+    │   │     fetch the delta    until “get_todo_symbols” returns empty →
+    │   │     you’re done.
+    │   └── trading_pipeline.py
+    │       Imports:
+    │         - core.data_provider.load_data
+    │         - datetime.date
+    │         - db.postgres_manager.run_query
+    │         - optuna
+    │         - pandas
+    │         - prefect.deployments.Deployment
+    │         - prefect.flow
+    │         - prefect.server.schemas.schedules.CronSchedule
+    │         - prefect.task
+    │         - vectorbt
+    │       Class: FeatureBuilder
+    │         Methods:
+    │           - __init__
+    │           - build
+    │       Class: SignalGenerator
+    │         Methods:
+    │           - __init__
+    │           - generate
+    │       Function: task_fetch_price
+    │       Function: task_persist_signals
+    │       Function: task_execute
+    │       Function: optimize_strategy
+    │       Function: daily_trading_flow
+    │       Function: objective
+    ├── fundamentals
+    │   📄 Skipped 2 data files (.csv, .json, .pyc)
+    │   ├── __pycache__/  [directory excluded]
+    │   └── fundamental_data_extractor.py
+    │       Imports:
+    │         - core.data_provider.load_data
+    │         - core.data_provider.save_data
+    │         - core.logger.logger
+    │         - pandas
+    │       Function: load_backup_and_save
+    │       Function: fetch_all
+    ├── generate_project_summary.py
+    │   Imports:
+    │     - argparse
+    │     - ast
+    │     - core.logger.logger
+    │     - os
+    │     - textwrap
+    │   Function: parse_python_file
+    │   Function: attach_parents
+    │   Function: extract_data_access_summary
+    │   Function: build_tree_and_extract
+    │   Function: main
+    │   Function: parse_with_parent
+    ├── generate_stock_labels.py
+    │   Imports:
+    │     - core.logger.logger
+    │     - os
+    │     - pandas
+    │   Function: generate_labels
+    ├── generate_training_data.py
+    │   Imports:
+    │     - core.logger.logger
+    │     - os
+    │     - pandas
+    │   Function: main
+    ├── hpo.py
+    │   Imports:
+    │     - models.meta_strategy_selector.train_meta_model
+    │     - models.train_dual_model_sql.train_dual_model
+    │     - models.train_stock_filter_model.train_stock_filter_model
+    ├── integrations
+    │   ├── __init__.py
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── drift_detection.py
+    │   │   Imports:
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - evidently.metric_preset.DataDriftPreset
+    │   │     - evidently.report.Report
+    │   │   Function: check_drift
+    │   ├── zerodha_client.py
+    │   │   Imports:
+    │   │     - json
+    │   │     - kiteconnect.KiteConnect
+    │   │     - kiteconnect.KiteTicker
+    │   │     - os
+    │   │   Function: get_kite
+    │   │   Function: get_ticker
+    │   └── zerodha_fetcher.py
+    │       Imports:
+    │         - core.logger.logger
+    │         - datetime.datetime
+    │         - datetime.timedelta
+    │         - dateutil.parser.parse
+    │         - db.conflict_utils.insert_with_conflict_handling
+    │         - integrations.zerodha_client.get_kite
+    │         - os
+    │         - pandas
+    │       Function: get_last_trading_day
+    │       Function: is_valid_price_df
+    │       Function: fetch_historical_data
+    │       Function: get_instrument_token
+    │       Function: main
+    ├── logs
+    │   📄 Skipped 1 data files (.csv, .json, .pyc)
+    │   ├── history_simulation
+    │   │   └── simulate_history_20250503_111707.log
+    │   ├── planner_agent_20250518_181633.log
+    │   ├── planner_agent_20250518_182621.log
+    │   ├── planner_agent_20250518_183449.log
+    │   ├── planner_agent_20250518_184724.log
+    │   ├── planner_agent_20250518_211106.log
+    │   └── planner_agent_20250518_211321.log
+    ├── models
+    │   ├── __init__.py
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── meta_strategy_selector.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - core.logger.logger
+    │   │     - core.model_io.load_model
+    │   │     - core.model_io.save_model
+    │   │     - itertools
+    │   │     - pandas
+    │   │     - sklearn.ensemble.RandomForestRegressor
+    │   │     - sklearn.metrics.mean_squared_error
+    │   │     - sklearn.model_selection.train_test_split
+    │   │   Function: load_combined_grid_data
+    │   │     Docstring:
+    │   │     Load and combine grid search results from all configured CSV
+    │   │     paths.
+    │   │   Function: train_meta_model
+    │   │     Docstring:
+    │   │     Train a meta-model to predict strategy performance. Reads
+    │   │     combined grid data, applies settings-driven train/test
+    │   │     split, trains an RF regressor with settings-backed
+    │   │     hyperparams, logs & saves the model and its metadata.
+    │   │   Function: suggest_best_parameters
+    │   │     Docstring:
+    │   │     Given a trained meta-model, enumerate the cartesian product
+    │   │     of settings-backed parameter ranges, predict their score,
+    │   │     and return the top-N configs as a DataFrame.
+    │   ├── ml_dual_model_prediction_sql.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - core.model_io.load_model
+    │   │     - core.time_context.get_simulation_date
+    │   │     - pandas
+    │   │   Function: predict_dual_model
+    │   │     Docstring:
+    │   │     Dual‐model prediction pipeline: - Loads fundamentals from
+    │   │     `data_path` - Loads feature table from `feature_path` - Runs
+    │   │     filter and exit models, returns top_n signals
+    │   ├── ml_training_sql.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - core.logger.logger
+    │   │     - core.model_io.save_model
+    │   │     - pandas
+    │   │     - sklearn.ensemble.RandomForestRegressor
+    │   │     - sklearn.metrics.mean_squared_error
+    │   │     - sklearn.model_selection.train_test_split
+    │   │     - sklearn.preprocessing.LabelEncoder
+    │   │   Function: train_meta_model
+    │   │     Docstring:
+    │   │     Train a meta-model (regressor) on combined features. Uses
+    │   │     settings for split and hyperparams.
+    │   ├── predictive_trader
+    │   │   ├── RELIANCE_v2_lstm.keras
+    │   │   └── RELIANCE_v2_scaler.pkl
+    │   ├── stock_filter_predictor.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - core.logger.logger
+    │   │     - core.model_io.load_model
+    │   │     - pandas
+    │   │   Function: run_stock_filter
+    │   ├── train_dual_model_sql.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - core.model_io.load_model
+    │   │     - core.model_io.save_model
+    │   │     - optuna
+    │   │     - pandas
+    │   │     - sklearn.ensemble.RandomForestClassifier
+    │   │     - sklearn.ensemble.RandomForestRegressor
+    │   │     - sklearn.metrics.accuracy_score
+    │   │     - sklearn.metrics.mean_squared_error
+    │   │     - sklearn.model_selection.train_test_split
+    │   │   Function: _load_training
+    │   │   Function: train_dual_model
+    │   │   Function: objective_class
+    │   │   Function: objective_reg
+    │   ├── train_exit_model.py
+    │   │   Imports:
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - core.logger.logger
+    │   │     - core.model_io.save_model
+    │   │     - pandas
+    │   │     - sklearn.ensemble.RandomForestClassifier
+    │   │     - sklearn.metrics.accuracy_score
+    │   │     - sklearn.metrics.classification_report
+    │   │     - sklearn.model_selection.train_test_split
+    │   │   Function: train_exit_model
+    │   ├── train_meta_model.py
+    │   └── train_stock_filter_model.py
+    │       Imports:
+    │         - core.config.settings
+    │         - core.data_provider.load_data
+    │         - core.logger.logger
+    │         - core.model_io.save_model
+    │         - optuna
+    │         - pandas
+    │         - sklearn.ensemble.RandomForestClassifier
+    │         - sklearn.metrics.accuracy_score
+    │         - sklearn.metrics.classification_report
+    │         - sklearn.model_selection.train_test_split
+    │       Function: train_stock_filter_model
+    │         Docstring:
+    │         Train a RandomForest-based stock filter model using
+    │         features.
+    │       Function: objective
+    ├── paper_trader.py
+    │   Imports:
+    │     - core.logger.logger
+    │     - datetime.datetime
+    │     - os
+    │     - pandas
+    │     - yfinance
+    │   Function: load_recommendations
+    │   Function: load_open_positions
+    │   Function: load_today_price
+    │   Function: enter_trades
+    │   Function: check_exit_condition
+    │   Function: exit_trades
+    │   Function: log_trades
+    │   Function: main
+    ├── predictive_trader
+    │   ├── A_tester.py
+    │   │   Imports:
+    │   │     - os
+    │   │     - predictive_trader.price_predictor_lgbm.train_lgbm_model
+    │   │     - predictive_trader.price_predictor_lstm.train_lstm_model
+    │   │     - predictive_trader.trade_signal_generator.generate_signals_for_list
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── backtest_lstm_predictor.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - datetime.timedelta
+    │   │     - numpy
+    │   │     - os
+    │   │     - pandas
+    │   │     - predictive_trader.price_predictor_lstm_v2.FEATURE_WINDOW
+    │   │     - predictive_trader.price_predictor_lstm_v2.FUTURE_OFFSET
+    │   │     - predictive_trader.price_predictor_lstm_v2.predict_5day_return_v2
+    │   │     - predictive_trader.price_predictor_lstm_v2.train_lstm_model_v2
+    │   │   Function: backtest_lstm_predictor
+    │   ├── curve_predictor.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - core.time_context.get_simulation_date
+    │   │     - db.db_router.insert_dataframe
+    │   │     - db.db_router.run_query
+    │   │     - os
+    │   │     - pandas
+    │   │     - predictive_trader.price_predictor_lstm.predict_next_5days_lstm
+    │   │     - predictive_trader.price_predictor_lstm.train_lstm_model
+    │   │   Function: generate_curves_for_list
+    │   ├── curve_signal_generator.py
+    │   │   Imports:
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - core.time_context.get_simulation_date
+    │   │     - db.db_router.insert_dataframe
+    │   │     - db.db_router.run_query
+    │   │     - pandas
+    │   │   Function: generate_signals_from_curves
+    │   ├── model_manager.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - datetime.datetime
+    │   │     - joblib
+    │   │     - numpy
+    │   │     - os
+    │   │     - pandas
+    │   │     - sklearn.preprocessing.MinMaxScaler
+    │   │     - tensorflow
+    │   │     - tensorflow.keras.Input
+    │   │     - tensorflow.keras.layers.Dense
+    │   │     - tensorflow.keras.layers.LSTM
+    │   │     - tensorflow.keras.models.Sequential
+    │   │   Function: build_lstm_model
+    │   │   Function: load_price_data
+    │   │   Function: train_model_upto
+    │   │   Function: load_model_for_date
+    │   ├── price_predictor_lgbm.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - joblib
+    │   │     - lightgbm
+    │   │     - numpy
+    │   │     - os
+    │   │     - pandas
+    │   │   Function: generate_features
+    │   │   Function: compute_rsi
+    │   │   Function: load_price_data
+    │   │   Function: train_lgbm_model
+    │   │   Function: predict_movement_lgbm
+    │   ├── price_predictor_lstm.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - core.time_context.get_simulation_date
+    │   │     - datetime.datetime
+    │   │     - db.db_router.insert_dataframe
+    │   │     - joblib
+    │   │     - numpy
+    │   │     - os
+    │   │     - pandas
+    │   │     - predictive_trader.model_manager.load_model_for_date
+    │   │     - sklearn.preprocessing.MinMaxScaler
+    │   │     - tensorflow
+    │   │     - tensorflow.keras.Input
+    │   │     - tensorflow.keras.layers.Dense
+    │   │     - tensorflow.keras.layers.LSTM
+    │   │     - tensorflow.keras.models.Sequential
+    │   │   Function: build_lstm_model
+    │   │   Function: load_price_data
+    │   │   Function: train_lstm_model
+    │   │   Function: predict_next_5days_lstm
+    │   │   Function: save_5day_predictions
+    │   ├── price_predictor_lstm_intraday.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.data_provider.fetch_stock_data
+    │   │     - core.logger.logger
+    │   │     - datetime.time
+    │   │     - joblib
+    │   │     - numpy
+    │   │     - os
+    │   │     - pandas
+    │   │     - sklearn.preprocessing.MinMaxScaler
+    │   │     - tensorflow.keras.Input
+    │   │     - tensorflow.keras.layers.Dense
+    │   │     - tensorflow.keras.layers.LSTM
+    │   │     - tensorflow.keras.models.Sequential
+    │   │     - tensorflow.keras.models.load_model
+    │   │   Function: build_model
+    │   │   Function: train_intraday_model
+    │   │   Function: predict_intraday_return
+    │   ├── price_predictor_lstm_v2.py
+    │   │   Imports:
+    │   │     - config.paths.PATHS
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - joblib
+    │   │     - numpy
+    │   │     - os
+    │   │     - pandas
+    │   │     - sklearn.preprocessing.MinMaxScaler
+    │   │     - tensorflow.keras.Input
+    │   │     - tensorflow.keras.layers.Dense
+    │   │     - tensorflow.keras.layers.LSTM
+    │   │     - tensorflow.keras.models.Sequential
+    │   │     - tensorflow.keras.models.load_model
+    │   │   Function: build_model
+    │   │   Function: train_lstm_model_v2
+    │   │   Function: predict_5day_return_v2
+    │   └── trade_signal_generator.py
+    │       Imports:
+    │         - core.data_provider.fetch_stock_data
+    │         - core.logger.logger
+    │         - datetime.datetime
+    │         - db.db_router.insert_dataframe
+    │         - os
+    │         - pandas
+    │         - predictive_trader.price_predictor_lgbm.predict_movement_lgbm
+    │         - predictive_trader.price_predictor_lstm.predict_next_close_lstm
+    │         - predictive_trader.price_predictor_lstm.predict_next_n_days_lstm
+    │       Function: generate_trade_signal
+    │       Function: generate_signals_for_list
+    ├── prefect.yaml
+    ├── project_data
+    │   ├── archive
+    │   ├── logs
+    │   ├── meta
+    │   ├── models
+    │   ├── predictions
+    │   ├── processed
+    │   ├── raw
+    │   ├── results
+    │   │   📄 Skipped 4 data files (.csv, .json, .pyc)
+    │   │   └── history
+    │   ├── secrets
+    │   └── trading_system.db
+    ├── project_summary.txt
+    ├── readme.md
+    ├── report_generator.py
+    │   Imports:
+    │     - core.logger.logger
+    │     - datetime.datetime
+    │     - matplotlib.pyplot
+    │     - os
+    │     - pandas
+    │     - yfinance
+    │   Function: load_data
+    │   Function: analyze_trades
+    │   Function: fetch_current_price
+    │   Function: analyze_open_positions
+    │   Function: main
+    ├── results
+    ├── scripts
+    │   ├── __archive__
+    │   │   ├── execution_agent.py
+    │   │   │   Imports:
+    │   │   │     - config.paths.PATHS
+    │   │   │     - core.data_provider.load_data
+    │   │   │     - core.data_provider.save_data
+    │   │   │     - core.logger.logger
+    │   │   │     - datetime.datetime
+    │   │   │     - os
+    │   │   │     - pandas
+    │   │   │     - time
+    │   │   │     - utils.file_io.load_dataframe
+    │   │   │     - utils.file_io.save_dataframe
+    │   │   │     - yfinance
+    │   │   │   Class: ExecutionAgent
+    │   │   │     Methods:
+    │   │   │       - __init__
+    │   │   │       - load_recommendations
+    │   │   │       - load_open_positions
+    │   │   │       - load_today_price
+    │   │   │       - check_exit_condition
+    │   │   │       - log_trades
+    │   │   │       - enter_trades
+    │   │   │       - exit_trades
+    │   │   │       - run
+    │   │   ├── historical_data
+    │   │   │   📄 Skipped 666 data files (.csv, .json, .pyc)
+    │   │   ├── planner_agent.py
+    │   │   │   Imports:
+    │   │   │     - agents.execution_agent_sql.ExecutionAgent
+    │   │   │     - agents.memory_agent.MemoryAgent
+    │   │   │     - agents.strategy_agent.StrategyAgent
+    │   │   │     - config.paths.PATHS
+    │   │   │     - core.data_provider.load_data
+    │   │   │     - core.data_provider.save_data
+    │   │   │     - core.logger.logger
+    │   │   │     - datetime.datetime
+    │   │   │     - fundamentals.fundamental_data_extractor
+    │   │   │     - models.stock_filter_predictor.run_stock_filter
+    │   │   │     - os
+    │   │   │     - pandas
+    │   │   │     - services.feedback_loop.update_training_data
+    │   │   │     - stock_selecter.auto_filter_selector.auto_select_filter
+    │   │   │     - utils.file_io.save_dataframe
+    │   │   │   Class: PlannerAgent
+    │   │   │     Methods:
+    │   │   │       - __init__
+    │   │   │       - run_weekly_routine
+    │   │   └── train_dual_model.py
+    │   │       Imports:
+    │   │         - config.paths.PATHS
+    │   │         - core.logger.logger
+    │   │         - core.model_io.load_model
+    │   │         - core.model_io.save_model
+    │   │         - json
+    │   │         - os
+    │   │         - pandas
+    │   │         - pickle
+    │   │         - sklearn.ensemble.RandomForestClassifier
+    │   │         - sklearn.ensemble.RandomForestRegressor
+    │   │         - sklearn.metrics.classification_report
+    │   │         - sklearn.metrics.mean_squared_error
+    │   │         - sklearn.model_selection.train_test_split
+    │   │         - sklearn.preprocessing.LabelEncoder
+    │   │         - utils.file_io.load_dataframe
+    │   │       Function: train_dual_models
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── check_db_orm_match.py
+    │   │   Imports:
+    │   │     - db.models.Base
+    │   │     - sqlalchemy.create_engine
+    │   │     - sqlalchemy.inspect
+    │   │   Function: check_schema
+    │   ├── fetch_instruments.py
+    │   │   Imports:
+    │   │     - integrations.zerodha_client.get_kite
+    │   │     - pandas
+    │   ├── generate_token.py
+    │   │   Imports:
+    │   │     - json
+    │   │     - kiteconnect.KiteConnect
+    │   │     - os
+    │   │     - webbrowser
+    │   ├── load_backup_fundamentals.py
+    │   │   Imports:
+    │   │     - core.data_provider.save_data
+    │   │     - pandas
+    │   ├── reset_system.py
+    │   │   Imports:
+    │   │     - argparse
+    │   │     - core.logger.logger
+    │   │     - db.db_router.run_query
+    │   │     - os
+    │   │     - pathlib.Path
+    │   │     - shutil
+    │   │     - sys
+    │   │   Function: drop_partitioned_feature_tables
+    │   │   Function: delete_model_files
+    │   │   Function: clear_cache_dirs
+    │   │   Function: main
+    │   └── seed_training_data.py
+    │       Imports:
+    │         - core.data_provider.load_data
+    │         - core.data_provider.save_data
+    │         - core.logger.logger
+    │         - pandas
+    │       Function: seed_training_data
+    ├── services
+    │   ├── __pycache__/  [directory excluded]
+    │   └── feedback_loop.py
+    │       Imports:
+    │         - core.config.settings
+    │         - core.data_provider.load_data
+    │         - core.data_provider.save_data
+    │         - core.logger.logger
+    │         - core.time_context.get_simulation_date
+    │         - pandas
+    │       Function: update_training_data
+    ├── stock_selecter
+    │   📄 Skipped 2 data files (.csv, .json, .pyc)
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── auto_filter_selector.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.logger.logger
+    │   │     - datetime.datetime
+    │   │     - os
+    │   │     - pandas
+    │   │     - stock_selecter.fallback_technical_filter.run_technical_filter
+    │   │     - stock_selecter.stock_screener.run_stock_filter
+    │   │   Function: auto_select_filter
+    │   ├── fallback_technical_filter.py
+    │   │   Imports:
+    │   │     - core.config.settings
+    │   │     - core.data_provider.load_data
+    │   │     - core.data_provider.save_data
+    │   │     - core.logger.logger
+    │   │     - core.time_context.get_simulation_date
+    │   │     - datetime.datetime
+    │   │     - pandas
+    │   │   Function: run_technical_filter
+    │   └── stock_screener.py
+    │       Imports:
+    │         - core.config.settings
+    │         - core.data_provider.load_data
+    │         - core.data_provider.save_data
+    │         - core.logger.logger
+    │         - datetime.datetime
+    │         - pandas
+    │       Function: filter_growth_stocks
+    │       Function: filter_value_stocks
+    │       Function: filter_momentum_stocks
+    │       Function: filter_defensive_stocks
+    │       Function: filter_small_cap_gems
+    │       Function: filter_high_volatility_stocks
+    │       Function: run_stock_filter
+    │         Docstring:
+    │         1) Load fundamentals 2) Apply filter_name 3) Persist only
+    │         'stock' (+ timestamp) back to SQL
+    │       Function: get_stock_list
+    │         Docstring:
+    │         Read back the ML-selected table for downstream use.
+    ├── tests
+    │   ├── __init__.py
+    │   ├── __pycache__/  [directory excluded]
+    │   ├── conftest.py
+    │   │   Imports:
+    │   │     - pandas
+    │   │     - pytest
+    │   │   Function: dummy_training_data
+    │   │     Docstring:
+    │   │     Very small fixture DataFrame for unit tests.
+    │   ├── test_data_audit.py
+    │   │   Imports:
+    │   │     - analysis.data_audit.main
+    │   │     - core.data_provider
+    │   │     - json
+    │   │     - pandas
+    │   │     - pathlib.Path
+    │   │     - sys
+    │   │   Function: test_data_audit_threshold_behavior
+    │   │   Function: mock_load_data
+    │   ├── test_data_checks.py
+    │   │   Imports:
+    │   │     - core.validation.data_checks.check_missing
+    │   │     - core.validation.data_checks.class_balance
+    │   │     - core.validation.data_checks.detect_outliers
+    │   │     - numpy
+    │   │     - pandas
+    │   │   Function: test_check_missing
+    │   │   Function: test_class_balance
+    │   │   Function: test_detect_outliers_zscore
+    │   │   Function: test_detect_outliers_iqr
+    │   │   Function: test_detect_outliers_zscore
+    │   ├── test_feature_pipeline.py
+    │   │   Imports:
+    │   │     - analysis.feature_pipeline.check_temporal_alignment
+    │   │     - analysis.feature_pipeline.detect_high_correlation
+    │   │     - numpy
+    │   │     - pandas
+    │   │     - pytest
+    │   │   Function: test_temporal_alignment_pass
+    │   │   Function: test_temporal_alignment_fail
+    │   │   Function: test_high_correlation_detection
+    │   ├── test_feedback_loop.py
+    │   │   Imports:
+    │   │     - analysis.feedback_loop.main
+    │   │     - core.data_provider
+    │   │     - pandas
+    │   │     - pytest
+    │   │   Function: dummy_feedback_data
+    │   │   Function: test_feedback_loop_kpis
+    │   └── test_model_health.py
+    │       Imports:
+    │         - analysis.model_health
+    │         - core.data_provider
+    │         - os
+    │         - pandas
+    │         - pytest
+    │       Function: dummy_model_metadata
+    │       Function: test_model_drift_detection
+    ├── train_strategy_selector.py
+    │   Imports:
+    │     - core.logger.logger
+    │     - pandas
+    │     - pickle
+    │     - sklearn.ensemble.RandomForestRegressor
+    │     - sklearn.model_selection.train_test_split
+    │     - sklearn.multioutput.MultiOutputRegressor
+    │   Function: train_strategy_selector
+    └── utils
+        ├── __pycache__/  [directory excluded]
+        ├── file_io.py
+        │   Imports:
+        │     - core.logger.logger
+        │     - os
+        │     - pandas
+        │   Function: load_dataframe
+        │   Function: save_dataframe
+        ├── precheck_features.py
+        │   Imports:
+        │     - config.paths.PATHS
+        │     - core.data_provider.load_data
+        │     - core.feature_generator.generate_features
+        │     - core.logger.logger
+        │     - core.model_io.load_model
+        │     - datetime.datetime
+        │     - json
+        │     - os
+        │     - pandas
+        │   Function: get_model_features
+        │   Function: is_feature_usable
+        │   Function: prefilter_valid_stocks
+        ├── progress_logger.py
+        │   Imports:
+        │     - datetime.datetime
+        │     - sqlite3
+        │   Function: log_model_progress
+        ├── skiplist_manager.py
+        │   Imports:
+        │     - db.db_router.run_query
+        │     - json
+        │     - os
+        │   Function: load_skiplist
+        │   Function: add_to_skiplist
+        │   Function: load_failed_precheck
+        │   Function: add_failed_precheck
+        ├── sql_utils.py
+        │   Imports:
+        │     - config.sql_tables.SQL_TABLES
+        │   Function: is_sql_table
+        ├── stock_health_precheck.py
+        │   Imports:
+        │     - core.data_provider.load_data
+        │     - core.logger.logger
+        │   Function: is_stock_tradeable
+        ├── stock_precheck.py
+        │   Imports:
+        │     - config.paths.PATHS
+        │     - core.feature_generator.generate_features
+        │     - core.logger.logger
+        │     - core.model_io.load_model
+        │   Function: is_feature_ready
+        │   Function: filter_valid_stocks
+        └── technical_indicators.py
+            Imports:
+              - pandas
+            Function: compute_sma
+            Function: compute_rsi

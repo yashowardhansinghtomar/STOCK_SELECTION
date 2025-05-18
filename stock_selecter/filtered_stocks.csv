@@ -1,0 +1,24 @@
+SYMBOL,NAME_OF_COMPANY,P/E Ratio,Debt-to-Equity,ROE (%),Earnings Growth,Market Cap,Sector,Industry
+ABB,ABB India Limited,57.80406,0.733,28.796,0.56,1084968796160.0,Industrials,Specialty Industrial Machinery
+BHARTIARTL,Bharti Airtel Limited,39.681576,135.125,21.236,4.911,9764015702016.0,Communication Services,Telecom Services
+BHARTIHEXA,Bharti Hexacom Limited,158.69872,144.75,25.26,0.225,676849975296.0,Communication Services,Telecom Services
+GILLETTE,Gillette India Limited,53.475716,0.005,44.821998,0.212,253327114240.0,Consumer Defensive,Household & Personal Products
+HEXT,Hexaware Technologies Limited,,10.723,23.504,0.65,460905807872.0,Technology,Information Technology Services
+ICICIBANK,ICICI Bank Limited,18.214338,,18.733999,0.16,8830603755520.0,Financial Services,Banks - Regional
+ICICIGI,ICICI Lombard General Insurance Company Limited,33.334988,,18.601,0.659,831735005184.0,Financial Services,Insurance - Diversified
+INDUSTOWER,Indus Towers Limited,8.740978,63.051,34.764,1.652,862377476096.0,Communication Services,Telecom Services
+J&KBANK,The Jammu & Kashmir Bank Limited,4.6778007,,16.686001,0.185,100240416768.0,Financial Services,Banks - Regional
+KSB,Ksb Limited,49.985966,0.236,18.110001,0.374,123967979520.0,Industrials,Specialty Industrial Machinery
+LODHA,Macrotech Developers Limited,41.660088,43.778,15.777000999999998,0.817,1052017819648.0,Real Estate,Real Estate - Development
+MAHABANK,Bank of Maharashtra,6.2318244,,22.245,0.252,349581148160.0,Financial Services,Banks - Regional
+MUTHOOTFIN,Muthoot Finance Limited,17.668331,306.36,19.137,0.286,882115674112.0,Financial Services,Credit Services
+PERSISTENT,Persistent Systems Limited,60.239162,7.764,24.133,0.287,790144614400.0,Technology,Information Technology Services
+PGHH,Procter & Gamble Hygiene and Health Care Limited,60.604725,0.272,71.655,0.173,434786729984.0,Consumer Defensive,Household & Personal Products
+RECLTD,REC Limited,6.8540363,678.386,21.976000000000003,0.232,1070798929920.0,Financial Services,Credit Services
+SBILIFE,SBI Life Insurance Company Limited,57.467857,,15.539,0.71,1389207879680.0,Financial Services,Insurance - Life
+SBIN,State Bank of India,8.183606,,18.16,0.703,6495784140800.0,Financial Services,Banks - Regional
+SHRIRAMFIN,Shriram Finance Limited,14.99395,296.607,16.09,0.198,1164989431808.0,Financial Services,Credit Services
+SUZLON,Suzlon Energy Limited,64.9762,4.498,26.868,0.867,744946073600.0,Industrials,Specialty Industrial Machinery
+UNIONBANK,Union Bank of India,5.298229,,15.843001,0.239,867941482496.0,Financial Services,Banks - Regional
+VBL,Varun Beverages Limited,61.325375,16.884,22.114,0.361,1650806095872.0,Consumer Defensive,Beverages - Non-Alcoholic
+WIPRO,Wipro Limited,22.316145,22.617,15.740000000000002,0.24,2761387147264.0,Technology,Information Technology Services
