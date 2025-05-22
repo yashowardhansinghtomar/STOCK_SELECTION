@@ -1,7 +1,10 @@
 # agents/planner_agent_sql.py
 
+from core.predict_param_model import predict_param_config
+from core.feature_enricher_multi import enrich_multi_interval_features
+from core.predictor import predict_dual_model
 from core.logger import logger
-from core.data_provider import load_data, fetch_stock_data
+from core.data_provider import load_data, fetch_stock_data, save_data
 from core.time_context import get_simulation_date
 from agents.strategy_agent import StrategyAgent
 from agents.execution_agent_sql import ExecutionAgentSQL
@@ -17,13 +20,19 @@ from core.config import settings
 from db.models import Base
 from db.db import engine, SessionLocal
 import numpy as np
-
+from db.postgres_manager import get_all_symbols
+from core.skiplist import add_to_skiplist, is_in_skiplist
 import pandas as pd
 import random
 from datetime import datetime
 from tqdm import tqdm
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
+from agents.rl_strategy_agent import RLStrategyAgent
+import pytz
+IST = pytz.timezone("Asia/Kolkata")
+
+BAD_PATTERNS = ["NIFTY", "IDX", "SG", "COMMODITIES", "CONSUMPTION"]
 
 
 class PlannerAgentSQL:
@@ -39,14 +48,24 @@ class PlannerAgentSQL:
         self.session = SessionLocal()
         Base.metadata.create_all(bind=self.session.get_bind())
 
-        self.today = get_simulation_date()
+
+        self.today = pd.to_datetime(get_simulation_date()).astimezone(IST).normalize()
+        logger.info(f"📆 SIMULATED_DATE initially set to: {self.today.date()}")
+
         feats = load_data(settings.feature_table)
         if feats is not None and not feats.empty:
-            max_feat = pd.to_datetime(feats["date"]).max().date()
-            # if simulation date is a weekend or ahead of latest features, align back
-            if pd.Timestamp(self.today).dayofweek >= 5 or pd.Timestamp(self.today).date() > max_feat:
-                logger.info(f"🔄 Aligning simulation date to last available features: {max_feat}")
-                self.today = str(max_feat)
+            max_feat = pd.to_datetime(feats["date"], errors="coerce")
+            max_feat = max_feat.dt.tz_localize("Asia/Kolkata", nonexistent='shift_forward') if max_feat.dt.tz is None else max_feat.dt.tz_convert("Asia/Kolkata")
+            max_feat = max_feat.max().normalize()
+
+            expected = self.today - pd.offsets.BDay(1)
+
+            # No need to localize expected – it’s already tz-aware
+            if max_feat < expected:
+                logger.error(
+                    f"❌ Features not up-to-date (max: {max_feat.date()} < expected: {expected.date()}); aborting filter step."
+                )
+                return
 
         self.strategy_agent = StrategyAgent()
         self.execution_agent = ExecutionAgentSQL(self.session, dry_run=dry_run)
@@ -64,8 +83,8 @@ class PlannerAgentSQL:
         self.suppress_skiplist_logs = True  # suppress verbose skip logs
         self.signal_arbitrator = SignalArbitrationAgent()
         self.risk_agent = RiskManagementAgent()
+        self.rl_agent = RLStrategyAgent()
 
-        
     def run_weekly_routine(self):
         try:
             logger.info(f"🔄 Simulation date is {self.today}")
@@ -170,11 +189,18 @@ class PlannerAgentSQL:
             f"{len(skipset)} pre-skipped."
         )
 
+
     def _refresh_features(self):
-        logger.info("🔄 Refreshing materialized view stock_features…")
-        with engine.begin() as conn:
-            conn.execute(text("REFRESH MATERIALIZED VIEW stock_features;"))
-        logger.success("✅ stock_features refreshed.")
+        logger.info("🔁 Generating multi-interval features...")
+        for stock in get_all_symbols():
+            if is_in_skiplist(stock):
+                continue
+            if any(p in stock.upper() for p in BAD_PATTERNS):
+                logger.warning(f"⏩ Skipping {stock} due to bad pattern match. Adding to skiplist.")
+                add_to_skiplist(stock, reason="bad_pattern")
+                continue
+            enrich_multi_interval_features(stock=stock, sim_date=self.today)
+        logger.success("✅ Multi-interval features generated and cached.")
 
     def _filter_stocks(self):
         # Pre-flight: ensure the feature view is up-to-date
@@ -185,13 +211,11 @@ class PlannerAgentSQL:
 
         # parse and find latest feature date
         max_feat = pd.to_datetime(feats["date"]).max()
-        expected = pd.to_datetime(self.today) - pd.Timedelta(days=1)
+        max_feat = pd.to_datetime(feats["date"], errors="coerce")
+        max_feat = max_feat.dt.tz_localize("Asia/Kolkata", nonexistent='shift_forward') if max_feat.dt.tz is None else max_feat.dt.tz_convert("Asia/Kolkata")
+        max_feat = max_feat.max().normalize()
 
-        # strip any timezone info so both are tz-naive
-        if hasattr(max_feat, "tzinfo") and max_feat.tzinfo is not None:
-            max_feat = max_feat.tz_localize(None)
-        if hasattr(expected, "tzinfo") and expected.tzinfo is not None:
-            expected = expected.tz_localize(None)
+        expected = self.today - pd.offsets.BDay(1)
 
         # now the comparison won't raise
         if max_feat < expected:
@@ -206,7 +230,7 @@ class PlannerAgentSQL:
             or selected is None
             or selected.empty
             or pd.to_datetime(selected["imported_at"].max()).date()
-            != datetime.strptime(self.today, "%Y-%m-%d").date()
+            != self.today.date()
         )
 
         if needs_filter:
@@ -221,6 +245,7 @@ class PlannerAgentSQL:
         else:
             logger.success("📦 ML-selected stocks already available. Skipping filtering.")
 
+
     def _evaluate_stocks(self):
         df_filtered = load_data(settings.selected_table)
         if df_filtered is None or df_filtered.empty:
@@ -228,7 +253,7 @@ class PlannerAgentSQL:
             stocks = settings.fallback_stocks
         else:
             df_filtered = df_filtered[
-                pd.to_datetime(df_filtered["imported_at"]).dt.date == datetime.today().date()
+                pd.to_datetime(df_filtered["imported_at"]).dt.date == self.today.date()
             ]
             stocks = df_filtered["stock"].dropna().unique().tolist()
             logger.info(f"📊 ML-selected stocks to evaluate: {len(stocks)}")
@@ -239,52 +264,84 @@ class PlannerAgentSQL:
 
         random.shuffle(stocks)
         eval_limit = min(len(stocks), self.max_eval)
-        logger.info(f"🔍 Preparing to evaluate up to {eval_limit} stocks...")
+        logger.info(f"🔍 Evaluating up to {eval_limit} stocks using param_model...")
 
         results = []
-        for stock in tqdm(stocks[:eval_limit], desc="Evaluating strategies"):
-            res = self.strategy_agent.evaluate(stock)
-            if res:
-                results.append(res)
+        for stock in tqdm(stocks[:eval_limit], desc="Evaluating via param_model"):
+            enriched = enrich_multi_interval_features(stock, self.today)
+            if enriched.empty:
+                continue
+
+            param_config = predict_param_config(enriched)
+            interval = param_config.get("interval", "day")
+
+            single_feat = enrich_multi_interval_features(stock, self.today, intervals=[interval])
+            if single_feat.empty:
+                continue
+
+            single_feat["strategy_config"] = [param_config] * len(single_feat)
+            preds = predict_dual_model(stock, single_feat)
+            if not preds:
+                continue
+
+            top = preds[0]
+            top["stock"] = stock
+            top["interval"] = interval
+            top["strategy_config"] = param_config
+            top["trade_triggered"] = int(top.get("trade_triggered", 1))
+            top["source"] = "param_model"
+            results.append(top)
 
         if not results:
             logger.error("❌ No valid strategies evaluated. Skipping trade execution.")
             return
 
-        df = pd.DataFrame(results).sort_values(by="sharpe", ascending=False).head(self.top_n)
-        df_sql = df[settings.recommendation_columns]
+        df = pd.DataFrame(results)
+        if "sharpe" in df.columns:
+            df = df.sort_values(by="sharpe", ascending=False)
+
+        df_sql = df.head(self.top_n)[settings.recommendation_columns]
         param_cols = ["stock", "sma_short", "sma_long", "rsi_thresh", "confidence", "sharpe"]
-        df_sql_param = df[param_cols].copy()
-
-        # Ensure no NaNs and cast types safely
+        df_sql_param = df[[col for col in param_cols if col in df.columns]].copy()
         df_sql_param = df_sql_param.fillna(0)
-        df_sql_param["date"] = get_simulation_date()
+        df_sql_param["date"] = self.today.date()
 
-        df_sql_param["sma_short"] = df_sql_param["sma_short"].astype("int32", errors='ignore')
-        df_sql_param["sma_long"] = df_sql_param["sma_long"].astype("int32", errors='ignore')
-        df_sql_param["rsi_thresh"] = df_sql_param["rsi_thresh"].astype("int32", errors='ignore')
-        df_sql_param["confidence"] = df_sql_param["confidence"].astype(float).fillna(0.0)
-        df_sql_param["sharpe"] = df_sql_param["sharpe"].astype(float).fillna(0.0)
-
-        # Replace nan/inf with 0 just in case
+        for col in ("sma_short", "sma_long", "rsi_thresh"):
+            if col in df_sql_param.columns:
+                df_sql_param[col] = df_sql_param[col].astype("int32", errors='ignore')
+        for col in ("confidence", "sharpe"):
+            if col in df_sql_param.columns:
+                df_sql_param[col] = df_sql_param[col].astype(float).fillna(0.0)
         df_sql_param = df_sql_param.replace([np.nan, np.inf, -np.inf], 0)
 
         insert_with_conflict_handling(df_sql, settings.recommendations_table)
         insert_with_conflict_handling(df_sql_param, "param_model_predictions")
         logger.success(f"✅ Top {self.top_n} strategy recommendations saved.")
-       
+
+        # ✅ Use new reward-aware RL + ML blending
         all_signals = []
         for stock in stocks[:eval_limit]:
-            signals = [self.strategy_agent.evaluate(stock)]
+            signals = []
+            rl_sig = self.rl_agent.evaluate(stock)  # no interval arg needed now
+            if rl_sig:
+                signals.append(rl_sig)
+            ml_sig = self.strategy_agent.evaluate(stock)
+            if ml_sig:
+                signals.append(ml_sig)
             final_signal = self.signal_arbitrator.arbitrate(signals)
             if final_signal:
                 all_signals.append(final_signal)
-    
+
         df = pd.DataFrame(all_signals)
+
 
 
     def _execute_trades(self):
         logger.info("💼 Executing trades with risk controls...")
+        recs = load_data(settings.recommendations_table)
+        if recs is None or "trade_triggered" not in recs.columns:
+            logger.warning("📭 Skipping execution due to invalid or empty recommendations.")
+            return
         self.execution_agent.run()
         open_positions = load_data(settings.open_positions_table)
         controlled_positions = self.risk_agent.apply_risk_controls(open_positions)
@@ -294,6 +351,9 @@ class PlannerAgentSQL:
         logger.info("🧠 Updating memory agent and feedback loop...")
         self.memory_agent.update()
         self.strategy_agent.log_summary()
+
+    def run(self):
+        self.run_weekly_routine()
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ import pandas as pd
 from core.logger import logger
 from core.config import settings
 from core.data_provider import load_data
+from core.time_context import get_simulation_date
 from stock_selecter.stock_screener import run_stock_filter
 from stock_selecter.fallback_technical_filter import run_technical_filter
 
@@ -16,6 +17,8 @@ FILTER_LOG = os.path.join("stock_selecter", "filter_usage_log.csv")
 
 
 def auto_select_filter() -> str:
+    today = pd.to_datetime(get_simulation_date()).normalize()
+
     if settings.use_fundamentals:
         df = load_data(settings.fundamentals_table)
         if df is None or df.empty:
@@ -24,8 +27,13 @@ def auto_select_filter() -> str:
         for f in FILTERS:
             logger.info(f"🔍 Trying filter: '{f}'")
             filtered_df = run_stock_filter(f)
-            count = len(filtered_df) if filtered_df is not None else 0
 
+            # Only include stocks matching the current SIMULATED_DATE
+            if "imported_at" in filtered_df.columns:
+                filtered_df["imported_at"] = pd.to_datetime(filtered_df["imported_at"]).dt.normalize()
+                filtered_df = filtered_df[filtered_df["imported_at"] == today]
+
+            count = len(filtered_df) if filtered_df is not None else 0
             if count >= MIN_REQUIRED_STOCKS:
                 logger.success(f"✅ Filter '{f}' selected with {count} stocks.")
                 chosen_filter = f

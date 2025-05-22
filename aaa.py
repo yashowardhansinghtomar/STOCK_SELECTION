@@ -1,25 +1,15 @@
-import pandas as pd
-from core.data_provider import load_data
-from core.time_context import get_simulation_date
-from core.config import settings
+from core.data_provider import fetch_stock_data
 
-sim_date = pd.to_datetime(get_simulation_date()).date()
-feature_date = (pd.Timestamp(sim_date) - pd.tseries.offsets.BDay(1)).date()
-
-feats = load_data(settings.feature_table)
-print("✅ stock_features loaded:", not feats.empty)
-feats["date"] = pd.to_datetime(feats["date"]).dt.date
-
-try:
-    trades = load_data(settings.paper_trades_table)
-    if trades is None or trades.empty:
-        print("❌ No trades found")
+if __name__ == "__main__":
+    df = fetch_stock_data(symbol="TCS", interval="day", days=30)
+    if df is not None and not df.empty:
+        print(f"✅ Got {len(df)} rows from {df.index.min().date()} to {df.index.max().date()}")
+        print(df.tail())
     else:
-        trades["timestamp"] = pd.to_datetime(trades["timestamp"])
-        trades = trades[trades["timestamp"].dt.date == sim_date].copy()
-        trades["date"] = (trades["timestamp"].dt.normalize() - pd.tseries.offsets.BDay(1)).dt.date
+        print("❌ No data fetched.")
 
-        print("💡 Feature stocks on", feature_date, ":", feats[feats["date"] == feature_date]["stock"].unique())
-        print("🧾 Trade stocks for", sim_date, ":", trades["stock"].unique())
-except Exception as e:
-    print("⚠️ Load error:", e)
+from core.data_provider import fetch_stock_data
+
+if __name__ == "__main__":
+    df = fetch_stock_data(symbol="TCS", interval="day", end="2025-05-21", days=60)
+    print(df[df.index > "2025-05-15"])

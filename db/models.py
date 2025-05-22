@@ -37,11 +37,48 @@ class StockPriceHistory(Base):
     high        = Column(Float, nullable=False)
     low         = Column(Float, nullable=False)
     close       = Column(Float, nullable=False)
-    adjclose    = Column(Float)
     volume      = Column(BigInteger, nullable=False)
+    interval    = Column(String, default="day")
 
-class StockFeature(Base):
-    __tablename__ = 'stock_features'
+
+class StockFeatureDay(Base):
+    __tablename__ = 'stock_features_day'
+    stock             = Column(String(20), primary_key=True)
+    date              = Column(Date, primary_key=True)
+    sma_short         = Column(Float)
+    sma_long          = Column(Float)
+    rsi_thresh        = Column(Float)
+    macd              = Column(Float)
+    vwap              = Column(Float)
+    atr_14            = Column(Float)
+    bb_width          = Column(Float)
+    macd_histogram    = Column(Float)
+    price_compression = Column(Float)
+    stock_encoded     = Column(Integer)
+    volatility_10     = Column(Float)
+    volume_spike      = Column(Boolean)
+    vwap_dev          = Column(Float)
+
+class StockFeature15m(Base):
+    __tablename__ = 'stock_features_15m'
+    stock             = Column(String(20), primary_key=True)
+    date              = Column(Date, primary_key=True)
+    sma_short         = Column(Float)
+    sma_long          = Column(Float)
+    rsi_thresh        = Column(Float)
+    macd              = Column(Float)
+    vwap              = Column(Float)
+    atr_14            = Column(Float)
+    bb_width          = Column(Float)
+    macd_histogram    = Column(Float)
+    price_compression = Column(Float)
+    stock_encoded     = Column(Integer)
+    volatility_10     = Column(Float)
+    volume_spike      = Column(Boolean)
+    vwap_dev          = Column(Float)
+
+class StockFeature60m(Base):
+    __tablename__ = 'stock_features_60m'
     stock             = Column(String(20), primary_key=True)
     date              = Column(Date, primary_key=True)
     sma_short         = Column(Float)
@@ -103,6 +140,7 @@ class Recommendation(Base):
     source            = Column(String)
     trade_count       = Column(Integer)
     trade_triggered   = Column(Integer)
+    interval          = Column(String, default="day")
 
 class OpenPosition(Base):
     __tablename__ = 'open_positions'
@@ -112,6 +150,7 @@ class OpenPosition(Base):
     sma_short     = Column(Float)
     sma_long      = Column(Float)
     rsi_thresh    = Column(Float)
+    interval      = Column(String, default="day")
 
 class PaperTrade(Base):
     __tablename__ = 'paper_trades'
@@ -126,6 +165,7 @@ class PaperTrade(Base):
     signal_reason   = Column(String)
     source          = Column(String)
     strategy_config = Column(String)
+    interval        = Column(String, default="day")
 
 class FilterModelPrediction(Base):
     __tablename__ = 'filter_model_predictions'
@@ -147,7 +187,7 @@ class ParamModelPrediction(Base):
     confidence      = Column(Float)
     expected_sharpe = Column(Float)
     created_at      = Column(DateTime, default=datetime.utcnow)
-    sharpe          = Column(Float)  # Add this line
+    sharpe          = Column(Float)
 
 class PriceModelPrediction(Base):
     __tablename__ = 'price_model_predictions'

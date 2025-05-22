@@ -6,6 +6,17 @@ from typing import List, Tuple, Dict, Optional
 from pathlib import Path
 from typing import ClassVar
 
+def get_feature_columns(interval: str = "day") -> list:
+    base = [
+        "sma_short", "sma_long", "rsi_thresh",
+        "macd", "vwap", "atr_14", "bb_width",
+        "macd_histogram", "price_compression",
+        "stock_encoded", "volatility_10",
+        "volume_spike", "vwap_dev"
+    ]
+    if interval == "day":
+        base += ["proxy_pe", "proxy_de_ratio", "proxy_roe", "proxy_growth", "proxy_market_cap"]
+    return base
 
 class RetrainConfig(BaseModel):
     paper_trades_threshold: int = 100
@@ -37,6 +48,10 @@ class Settings(BaseSettings):
     drift_detection_enabled: bool = True
     drift_features: list = ["sma_short", "sma_long", "rsi_thresh", "volatility_10", "macd_histogram"]
 
+    # ─── ML Model Settings ─────────────────────────────────────────────    
+    fallback_stocks: List[str] = Field(default_factory=list)
+
+
     # ─── time series Agent switch ───────────────────────────────────────────────────
     ts_enabled: bool = True
 
@@ -48,7 +63,7 @@ class Settings(BaseSettings):
 
     # ─── Table Names ───────────────────────────────────────────────────
     fundamentals_table: str        = "stock_fundamentals"
-    feature_table: str             = "stock_features"
+    feature_table: str             = "stock_features_day"
     recommendations_table: str     = "recommendations"
     open_positions_table: str      = "open_positions"
     trades_table: str              = "paper_trades"
@@ -66,7 +81,7 @@ class Settings(BaseSettings):
     filter_model_predictions_table: str = "filter_model_predictions"
     param_model_predictions_table: str  = "param_model_predictions"
     price_model_predictions_table: str  = "price_model_predictions"
-
+    selected_table: str            = "ml_selected_stocks"
     # ─── Agent & Model Names ──────────────────────────────────────────
     filter_model_name: str          = "filter_model"
     dual_classifier_model_name: str = "dual_model_classifier"
@@ -96,7 +111,7 @@ class Settings(BaseSettings):
 
     # ─── Price‐Fetching & Caching ────────────────────────────────────
     price_fetch_interval: str = "day"
-    price_fetch_days: int     = 200
+    price_fetch_days: int     = 2000
     price_cache_min_rows: int = 50
 
     # ─── Date Columns per Table ─────────────────────────────────────
@@ -108,8 +123,8 @@ class Settings(BaseSettings):
         "skiplist_stocks":     ["date_added"],
         "recommendations":     ["date"],
         "paper_trades":        ["timestamp"],
-        "meta_metadata":       ["trained_at"],
-    }
+        "meta_metadata":       ["trained_at"]
+    }   
 
     # ─── Backtest Defaults ──────────────────────────────────────────
     backtest_start: str = "2023-01-01"
@@ -125,18 +140,27 @@ class Settings(BaseSettings):
     # ─── Planner Agent Settings ─────────────────────────────────────
     max_eval: int                  = 50
     stock_whitelist: List[str]     = []
-    indicator_columns: List[str]   = [
+    indicator_columns: List[str] = [
         "sma_short", "sma_long", "rsi_thresh", "volume_spike",
         "volatility_10", "atr_14", "macd_histogram", "bb_width",
         "vwap_dev", "price_compression", "stock_encoded",
         "proxy_pe", "proxy_de_ratio", "proxy_roe",
         "proxy_growth", "proxy_market_cap"
     ]
-    selected_table: str        = "ml_selected_stocks"
-    fallback_stocks: List[str] = []
 
-    # ─── Training columns for feedback-loop ─────────────────────────
-    training_columns: List[str] = indicator_columns + ["target"]
+    # ─── interval feature table map ─────────────────────────────────────
+    interval_feature_table_map: Dict[str, str] = {
+        "day": "stock_features_day",
+        "15m": "stock_features_15m",
+        "60m": "stock_features_60m"
+    }
+
+    exit_feature_columns: List[str] = [
+        "exit_kind", "stop_loss", "take_profit", "trail",
+        "exit_sma_window", "max_holding_days"
+    ]
+
+    training_columns: List[str] = indicator_columns + exit_feature_columns + ["target"]
 
     # ─── ML Training & Split ────────────────────────────────────────
     test_size: float  = 0.2
@@ -160,7 +184,7 @@ class Settings(BaseSettings):
 
     # ─── Retraining Thresholds & Model Names ───────────────────────
     retrain: RetrainConfig = RetrainConfig()
-    
+
     model_names: Dict[str,str] = {
         "exit":   "exit_model",
         "filter": "filter_model",
@@ -196,8 +220,7 @@ class Settings(BaseSettings):
         "grid_params":           "grid_params",
         "filter_model_predictions": "filter_model_predictions",
         "param_model_predictions":  "param_model_predictions",
-        "price_model_predictions":  "price_model_predictions",
-
+        "price_model_predictions":  "price_model_predictions"
     }
 
     # ─── Recommendation Columns ────────────────────────────────────────
@@ -218,7 +241,6 @@ class Settings(BaseSettings):
         "source",
         "trade_count",
         "trade_triggered",
-    
     ]
 
     class Config:

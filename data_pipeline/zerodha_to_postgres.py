@@ -15,10 +15,7 @@ INSTRUMENTS_TABLE = "instruments"
 PRICE_HISTORY_TABLE = "stock_price_history"
 SKIPLIST_TABLE = "skiplist_stocks"
 
-WHITELIST = [
-    "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK",
-    "KOTAKBANK", "HINDUNILVR", "LT", "AXISBANK", "SBIN"
-]
+WHITELIST = []
 
 def load_stock_list():
     try:

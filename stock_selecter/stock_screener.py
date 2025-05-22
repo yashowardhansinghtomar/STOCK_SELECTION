@@ -5,6 +5,7 @@ from core.logger       import logger
 from core.config       import settings
 import pandas as pd
 from datetime import datetime
+from core.time_context import get_simulation_date
 
 # ─── your existing filter functions ──────────────────────────────────────────
 def filter_growth_stocks(df):
@@ -62,7 +63,11 @@ def run_stock_filter(
     if not settings.use_fundamentals:
         logger.warning("⚠️ use_fundamentals=False — skipping filter.")
         return pd.DataFrame()
+    sim_date = pd.to_datetime(get_simulation_date()).normalize()
     df = load_data(settings.fundamentals_table)
+    if "imported_at" in df.columns:
+        df["imported_at"] = pd.to_datetime(df["imported_at"]).dt.normalize()
+        df = df[df["imported_at"] <= sim_date]
     if df is None or df.empty:
         logger.warning("⚠️ No fundamental data found in SQL.")
         return pd.DataFrame()

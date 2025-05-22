@@ -57,3 +57,13 @@ def insert_dataframe(df: pd.DataFrame, table_name: str, if_exists: str = "append
         index=index,
         method="multi"         # faster batch insert
     )
+from db.models import Instrument
+from db.db import SessionLocal
+
+def get_all_symbols():
+    session = SessionLocal()
+    try:
+        results = session.query(Instrument.tradingsymbol).all()
+        return [r[0] for r in results]
+    finally:
+        session.close()

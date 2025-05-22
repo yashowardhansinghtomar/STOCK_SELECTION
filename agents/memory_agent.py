@@ -11,20 +11,17 @@ from models.train_stock_filter_model import train_stock_filter_model
 from models.train_dual_model_sql import train_dual_model
 from models.meta_strategy_selector import train_meta_model
 from core.config import settings
+from services.feedback_loop import update_training_data
+from rl.rl_finetune import finetune_rl  # 🆕 Add RL finetune hook
 
 import pandas as pd
-from pandas.tseries.offsets import BDay
-from datetime import datetime
 
 
 class MemoryAgent:
     def __init__(self):
-        sim_date = get_simulation_date()
-        self.today = (
-            datetime.strptime(sim_date, "%Y-%m-%d")
-            if isinstance(sim_date, str)
-            else sim_date
-        )
+        self.today = pd.to_datetime(get_simulation_date()).normalize()
+        self.today_str = self.today.strftime("%Y-%m-%d")
+        self.today_date = self.today.date()
 
     def archive_table(self, logical_name: str):
         phys = settings.table_map[logical_name]
@@ -46,7 +43,7 @@ class MemoryAgent:
             return
 
         df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-        today_trades = df[df["timestamp"].dt.date == self.today.date()]
+        today_trades = df[df["timestamp"].dt.date == self.today_date]
         if today_trades.empty:
             logger.info("📬 No trades executed today.")
             return
@@ -65,7 +62,6 @@ class MemoryAgent:
             logger.info(f"📊 Today's avg paper-trade return: {avg_ret:.2%} ({len(returns)} trades)")
         else:
             logger.info("📬 No valid buy-sell pairs for return calculation.")
-
 
     def check_retraining_needed(self):
         logger.start("🧠 Checking retraining thresholds...")
@@ -109,77 +105,29 @@ class MemoryAgent:
 
         if retrained:
             logger.success("✅ Retraining complete.")
-        else:
+
+        # ✅ Finetune RL based on replay buffer
+        logger.start("🎯 Checking RL finetune opportunity...")
+        try:
+            finetune_rl(model_path="models/rl_policy.zip", steps=5000)
+        except Exception as e:
+            logger.warning(f"⚠️ RL finetune failed: {e}")
+
+        if not retrained:
             logger.info("🔵 No retraining needed.")
 
     def feedback_loop(self):
-        """
-        Merge features with today's trades (using previous business-day features) and upsert into training_data.
-        """
-        logger.start("🚀 Updating training data via feedback loop…")
-        try:
-            feats = load_data(settings.feature_table)
-            if feats is None or feats.empty:
-                logger.error("❌ No features available for feedback loop.")
-                return
-            if "symbol" in feats.columns and "stock" not in feats.columns:
-                feats = feats.rename(columns={"symbol": "stock"})
-            feats["date"] = pd.to_datetime(feats["date"]).dt.date
-
-            trades = load_data(settings.paper_trades_table)
-            if trades is None or trades.empty:
-                logger.info("📬 No paper trades available for feedback loop.")
-                return
-            trades["timestamp"] = pd.to_datetime(trades["timestamp"], errors="coerce")
-            trades_today = trades[trades["timestamp"].dt.date == self.today.date()].copy()
-            if trades_today.empty:
-                logger.info("📬 No trades executed today for feedback loop.")
-                return
-
-            trades_today["feature_date"] = trades_today["timestamp"].dt.date
-
-            trades_today = trades_today.rename(columns={"feature_date": "date"})
-            
-            logger.debug(f"📌 trades_today date range: {trades_today['date'].min()} → {trades_today['date'].max()}")
-            logger.debug(f"📌 features date range: {feats['date'].min()} → {feats['date'].max()}")
-            logger.debug(f"🧪 trades_today stocks: {trades_today['stock'].unique().tolist()}")
-            logger.debug(f"🧪 features stocks: {feats['stock'].unique().tolist()}")
-
-            merged = pd.merge(
-                feats,
-                trades_today[["stock", "date", "action"]],
-                on=["stock", "date"],
-                how="inner"
-            )
-            if merged.empty:
-                logger.info("⚠️ No matching features for today’s trades.")
-                return
-            merged["label"] = (merged["action"] == "sell").astype(int)
-
-            try:
-                logger.info(f"🧠 Training samples preview:\n{merged[settings.training_columns].head(5).to_string(index=False)}")
-            except Exception as e:
-                logger.warning(f"⚠️ Could not preview training rows: {e}")
-
-            insert_with_conflict_handling(
-                table=settings.training_data_table,
-                df=merged,
-                conflict_columns=["stock", "date"]
-            )
-            logger.success(f"✅ Upserted {len(merged)} training rows.")
-        except Exception as e:
-            logger.error(f"❌ Feedback-loop failed: {e}")
+        update_training_data()
 
     def update(self):
         logger.start("\n🚀 MemoryAgent full weekly update…")
         self.summarize_weekly_performance()
-        self.feedback_loop()                  # <- must come first
-        self.check_retraining_needed()       # <- after feedback inserts rows
+        self.feedback_loop()
+        self.check_retraining_needed()
         if getattr(settings, "enable_archiving", False):
             for tbl in settings.archive_order:
                 self.archive_table(tbl)
         logger.success("✅ MemoryAgent update done.")
-
 
 
 if __name__ == "__main__":

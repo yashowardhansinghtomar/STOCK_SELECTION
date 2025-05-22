@@ -1,24 +1,21 @@
 from datetime import datetime
-from backtesting import Backtest
-from core.data_provider import fetch_stock_data
+import pandas as pd
 from core.logger import logger
 from core.time_context import get_simulation_date
+from core.data_provider import fetch_stock_data
+from core.strategy_config import StrategyConfig, ExitRule
+from core.backtest_bt import run_backtest_config
 from db.postgres_manager import run_query
+import json
 
 
 def predict_grid_config(stock: str, top_n: int = 3) -> list:
-    logger.info(f"🔍 Running grid prediction for {stock} using backtesting.py optimizer...")
+    logger.info(f"🔍 Running grid prediction for {stock} with entry+exit combos…")
     end_date = get_simulation_date()
     df = fetch_stock_data(stock, end=end_date)
     if df is None or df.empty:
         logger.warning(f"⚠️ No price history for {stock}. Aborting grid prediction.")
         return []
-
-    df = df.rename(columns={
-        'open': 'Open', 'high': 'High', 'low': 'Low',
-        'close': 'Close', 'volume': 'Volume',
-        'volume_proxy': 'Volume'
-    })
 
     rows = run_query("SELECT sma_short, sma_long, rsi_thresh FROM grid_params")
     sma_shorts = sorted({r[0] for r in rows})
@@ -28,36 +25,50 @@ def predict_grid_config(stock: str, top_n: int = 3) -> list:
         logger.warning("⚠️ grid_params table is empty or malformed.")
         return []
 
-    try:
-        from core.backtest_bt import SMA_RSI
-    except ImportError as e:
-        logger.error(f"Cannot load backtest strategy (SMA_RSI): {e}")
+    # Define exit rules to try
+    exit_rules = [
+        ExitRule(kind="fixed_pct", stop_loss=0.03, take_profit=0.06, max_holding_days=10),
+        ExitRule(kind="sma_cross", sma_window=20, max_holding_days=10),
+        ExitRule(kind="time_stop", max_holding_days=5)
+    ]
+
+    results = []
+    for s in sma_shorts:
+        for l in sma_longs:
+            if s >= l:
+                continue
+            for r in rsi_thres:
+                for rule in exit_rules:
+                    cfg = StrategyConfig(
+                        sma_short=s,
+                        sma_long=l,
+                        rsi_entry=r,
+                        exit_rule=rule
+                    )
+                    try:
+                        metrics = run_backtest_config(stock, cfg, end=end_date)
+                        if not metrics:
+                            continue
+                        results.append({
+                            "stock": stock,
+                            "recommended_config": cfg.dict(),
+                            "predicted_return": metrics["total_return"],
+                            "sharpe": metrics["sharpe"],
+                            "max_drawdown": metrics["max_drawdown"],
+                            "avg_trade_return": metrics["avg_trade_return"],
+                            "trade_count": metrics["trade_count"],
+                            "trade_triggered": 1
+                        })
+                    except Exception as e:
+                        logger.warning(f"❌ Backtest failed for {stock}: {e}")
+                        continue
+
+    if not results:
         return []
 
-    bt = Backtest(df, SMA_RSI, cash=10_000, commission=0.002)
-    stats = bt.optimize(
-        sma_short=sma_shorts,
-        sma_long=sma_longs,
-        rsi_thresh=rsi_thres,
-        maximize='Return [%]',
-        constraint=lambda p: p.sma_short < p.sma_long,
-        return_heatmap=False
-    )
-
-    strat = stats._strategy
-    best_params = {
-        'sma_short': strat.sma_short,
-        'sma_long': strat.sma_long,
-        'rsi_thresh': strat.rsi_thresh
-    }
-    pred_return = stats['Return [%]']
-
-    return [{
-        'stock': stock,
-        'recommended_config': best_params,
-        'predicted_return': float(pred_return),
-        'trade_triggered': 1
-    }]
+    df = pd.DataFrame(results)
+    df = df.sort_values(by="sharpe", ascending=False).head(top_n)
+    return df.to_dict(orient="records")
 
 
 def persist_grid_recommendations(stocks: list[str], top_n: int = 1):
@@ -69,83 +80,50 @@ def persist_grid_recommendations(stocks: list[str], top_n: int = 1):
             logger.warning(f"No grid rec for {stock}; skipping persist.")
             continue
 
-        rec = recs[0]
-        cfg = rec["recommended_config"]
+        for rec in recs:
+            cfg = rec["recommended_config"]
+            exit_rule = cfg.get("exit_rule", {})
 
-        sma_short = int(cfg["sma_short"])
-        sma_long = int(cfg["sma_long"])
-        rsi_thresh = int(cfg["rsi_thresh"])
-        pred_return = float(rec["predicted_return"])
-        triggered = int(rec["trade_triggered"])
+            run_query(
+                """
+                INSERT INTO recommendations
+                  (stock, date, sma_short, sma_long, rsi_thresh,
+                   predicted_return, trade_triggered, source, imported_at, exit_rule)
+                VALUES
+                  (:stock, :date, :sma_short, :sma_long, :rsi_thresh,
+                   :predicted_return, :trade_triggered, :source, :imported_at, :exit_rule)
+                ON CONFLICT (stock, date) DO UPDATE SET
+                  sma_short        = EXCLUDED.sma_short,
+                  sma_long         = EXCLUDED.sma_long,
+                  rsi_thresh       = EXCLUDED.rsi_thresh,
+                  predicted_return = EXCLUDED.predicted_return,
+                  trade_triggered  = EXCLUDED.trade_triggered,
+                  source           = EXCLUDED.source,
+                  imported_at      = EXCLUDED.imported_at,
+                  exit_rule        = EXCLUDED.exit_rule;
+                """,
+                params={
+                    "stock": stock,
+                    "date": today,
+                    "sma_short": int(cfg["sma_short"]),
+                    "sma_long": int(cfg["sma_long"]),
+                    "rsi_thresh": float(cfg["rsi_entry"]),
+                    "predicted_return": float(rec["predicted_return"]),
+                    "trade_triggered": int(rec["trade_triggered"]),
+                    "source": "grid_predictor",
+                    "imported_at": datetime.now(),
+                    "exit_rule": json.dumps(exit_rule)
+                },
+                fetchall=False
+            )
 
-        # → update recommendations table
-        run_query(
-            """
-            INSERT INTO recommendations
-              (stock, date, sma_short, sma_long, rsi_thresh,
-               predicted_return, trade_triggered, source, imported_at)
-            VALUES
-              (:stock, :date, :sma_short, :sma_long, :rsi_thresh,
-               :predicted_return, :trade_triggered, :source, :imported_at)
-            ON CONFLICT (stock, date) DO UPDATE SET
-              sma_short        = EXCLUDED.sma_short,
-              sma_long         = EXCLUDED.sma_long,
-              rsi_thresh       = EXCLUDED.rsi_thresh,
-              predicted_return = EXCLUDED.predicted_return,
-              trade_triggered  = EXCLUDED.trade_triggered,
-              source           = EXCLUDED.source,
-              imported_at      = EXCLUDED.imported_at;
-            """,
-            params={
-                "stock": stock,
-                "date": today,
-                "sma_short": sma_short,
-                "sma_long": sma_long,
-                "rsi_thresh": rsi_thresh,
-                "predicted_return": pred_return,
-                "trade_triggered": triggered,
-                "source": "grid_predictor",
-                "imported_at": datetime.now()
-            },
-            fetchall=False
-        )
-
-        # → update param_model_predictions table
-        run_query(
-            """
-            INSERT INTO param_model_predictions
-              (date, stock, sma_short, sma_long, rsi_thresh,
-               confidence, expected_sharpe, created_at)
-            VALUES
-              (:date, :stock, :sma_short, :sma_long, :rsi_thresh,
-               :confidence, :expected_sharpe, :created_at)
-            ON CONFLICT (date, stock) DO UPDATE SET
-              sma_short       = EXCLUDED.sma_short,
-              sma_long        = EXCLUDED.sma_long,
-              rsi_thresh      = EXCLUDED.rsi_thresh,
-              confidence      = EXCLUDED.confidence,
-              expected_sharpe = EXCLUDED.expected_sharpe,
-              created_at      = EXCLUDED.created_at;
-            """,
-            params={
-                "date": today,
-                "stock": stock,
-                "sma_short": sma_short,
-                "sma_long": sma_long,
-                "rsi_thresh": rsi_thresh,
-                "confidence": None,
-                "expected_sharpe": pred_return,
-                "created_at": datetime.now()
-            },
-            fetchall=False
-        )
-
-        logger.success(f"✅ Persisted grid rec for {stock}")
+            logger.success(f"✅ Grid rec persisted for {stock} (Sharpe: {rec['sharpe']:.2f})")
 
 
 if __name__ == "__main__":
-    import multiprocessing
     from backtesting import backtesting
+    import multiprocessing
+
     backtesting.Pool = multiprocessing.Pool
     symbols = ["RELIANCE", "TCS", "INFY"]
     persist_grid_recommendations(symbols, top_n=1)

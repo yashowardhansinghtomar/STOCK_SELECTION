@@ -4,3 +4,23 @@ __pycache__/
 logs/
 project_data/
 *.db
+
+# ✅ Additions
+# Model binaries
+models/
+*.zip
+
+# Replay buffer and cached data
+*.parquet
+cache/
+data/
+
+# Notebooks and temp files
+*.ipynb
+*.bak
+*.tmp
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db

@@ -7,12 +7,12 @@ import pandas as pd
 CONFLICT_HANDLERS = {
     "stock_fundamentals": (["stock"], "UPDATE"),
     "stock_features": (["stock", "date"], "UPDATE"),
-    "stock_price_history": (["symbol", "date"], "DO NOTHING"),
+    "stock_price_history": (["symbol", "date", "interval"], "DO NOTHING"),
     "trades": (["symbol", "timestamp"], "DO NOTHING"),
     "paper_trades": (["timestamp", "stock", "action"], "DO NOTHING"),
     "open_positions": (["stock"], "REPLACE"),
     "model_store": (["model_name"], "UPDATE"),
-    "recommendations": (["stock", "date"], "REPLACE"),  # ✅ added
+    "recommendations": (["stock", "date"], "REPLACE"), 
     "param_model_predictions": (["date", "stock"], "UPDATE"),
     "filter_model_predictions": (["date", "stock"], "REPLACE"),
     "price_model_predictions": (["date", "stock"], "UPDATE"),

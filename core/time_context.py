@@ -1,27 +1,26 @@
-from datetime import datetime
-from pandas.tseries.offsets import BDay
-import pandas as pd
 import os
+import pandas as pd
+from datetime import datetime, time
+from pandas.tseries.offsets import BDay
+import pytz
 
-from core.data_provider import load_data
+IST = pytz.timezone("Asia/Kolkata")
 
-def get_simulation_date():
-    """Return SIMULATED_DATE from env or fallback to latest available date in price history."""
-    date = os.environ.get("SIMULATED_DATE")
-    if date:
-        try:
-            return datetime.strptime(date.strip(), "%Y-%m-%d").strftime("%Y-%m-%d")
-        except ValueError:
-            print(f"⚠️ Malformed SIMULATED_DATE: {date}. Falling back.")
+def get_simulation_date() -> pd.Timestamp:
+    """Return simulation date as timezone-aware pd.Timestamp (IST)"""
+    env_date = os.environ.get("SIMULATED_DATE")
+    try:
+        date = pd.to_datetime(env_date).date() if env_date else datetime.now(IST).date()
+    except Exception:
+        print(f"⚠️ Invalid SIMULATED_DATE: {env_date}. Falling back to today.")
+        date = datetime.now(IST).date()
 
-    # Load max available date from stock_price_history
-    df = load_data("stock_price_history")
-    if df is not None and "date" in df.columns and not df.empty:
-        max_date = pd.to_datetime(df["date"]).max()
-        return max_date.strftime("%Y-%m-%d")
+    # Shift to last business day if weekend
+    if pd.Timestamp(date).dayofweek >= 5:
+        date = (pd.Timestamp(date) - BDay(1)).date()
 
-    # fallback to last weekday if nothing found
-    return (pd.Timestamp.today().normalize() - BDay(1)).strftime("%Y-%m-%d")
+    # Return tz-aware timestamp for that date at 00:00
+    return IST.localize(datetime.combine(date, time(0, 0)))
 
 def set_simulation_date(sim_date: str):
     os.environ["SIMULATED_DATE"] = sim_date

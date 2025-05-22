@@ -1,16 +1,16 @@
-DROP MATERIALIZED VIEW IF EXISTS stock_features;
+DROP MATERIALIZED VIEW IF EXISTS stock_features_15m;
 
-CREATE MATERIALIZED VIEW stock_features AS
+CREATE MATERIALIZED VIEW stock_features_15m AS
 WITH base AS (
     SELECT
         symbol AS stock,
-        date::date AS date,
+        date,
         close,
         high,
         low,
         volume
     FROM stock_price_history
-    WHERE interval = 'day'
+    WHERE interval = '15minute'
 ),
 price_diff AS (
     SELECT *,

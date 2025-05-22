@@ -1,31 +1,41 @@
 # models/train_dual_model_sql.py
-from core.model_io import save_model
-from core.logger import logger
-from core.data_provider import load_data
-from core.model_io import save_model, load_model
-from core.config import settings
+
 import optuna
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, mean_squared_error
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.model_selection import train_test_split
+
+from core.logger import logger
+from core.config import settings
+from core.data_provider import load_data
+from core.model_io import save_model
+
 
 def _load_training(df_name: str):
     df = load_data(df_name)
     if df is None or df.empty:
         logger.error(f"❌ No training data found in '{df_name}'. Aborting.")
         return None, None, None
-    X = df.drop(columns=["target", "date", "stock"])
+
+    missing = [col for col in settings.training_columns if col not in df.columns]
+    if missing:
+        logger.error(f"❌ Missing required columns in training data: {missing}")
+        return None, None, None
+
+    X = df[settings.training_columns].drop(columns=["target"])
     y = df["target"]
     return X, y, df
 
 
 def train_dual_model(df_name: str = "training_data"):
-    # Load data
+    logger.start("🧠 Training dual-model (entry + exit config aware)…")
+
     X, y, df = _load_training(df_name)
     if X is None:
         return
-    # Split for classifier
+
+    # ─── Classifier ────────────────────────────────────────
     X_train_c, X_test_c, y_train_c, y_test_c = train_test_split(
         X, y, test_size=settings.test_size, random_state=settings.random_state
     )
@@ -43,28 +53,47 @@ def train_dual_model(df_name: str = "training_data"):
         preds = clf.predict(X_test_c)
         return accuracy_score(y_test_c, preds)
 
-    # Classifier HPO
-    logger.info(f"🔍 Running classifier HPO for {settings.hpo_trials} trials...")
+    logger.info(f"🔍 Running classifier HPO for {settings.meta_top_n} trials...")
     study_clf = optuna.create_study(direction="maximize")
-    study_clf.optimize(objective_class, n_trials=settings.hpo_trials)
+    study_clf.optimize(objective_class, n_trials=settings.meta_top_n)
+
     best_clf_params = study_clf.best_params
     logger.success(f"✅ Best classifier params: {best_clf_params}")
+
     clf_final = RandomForestClassifier(**best_clf_params, random_state=settings.random_state, n_jobs=-1)
     clf_final.fit(X_train_c, y_train_c)
-    clf_preds = clf_final.predict(X_test_c)
-    clf_acc = accuracy_score(y_test_c, clf_preds)
-    logger.info(f"Classifier test accuracy: {clf_acc:.4f}")
-    save_model("dual_classifier", {"model": clf_final, "features": list(X.columns), "params": best_clf_params})
+    acc = accuracy_score(y_test_c, clf_final.predict(X_test_c))
+    logger.info(f"📊 Classifier accuracy: {acc:.4f}")
 
-    # Prepare for regressor using only positive cases
-    df_reg = df.copy()
-    df_reg["pred"] = clf_final.predict(X)
-    pos_idx = df_reg[df_reg["pred"] == 1].index
+    save_model(settings.dual_classifier_model_name, {
+        "model": clf_final,
+        "features": list(X.columns),
+        "params": best_clf_params
+    }, meta={
+        "type": "classifier",
+        "algo": "RandomForest",
+        "accuracy": round(acc, 4),
+        "trained_at": str(pd.Timestamp.now()),
+        "features": list(X.columns),
+        "params": best_clf_params
+    })
+
+    # ─── Regressor ──────────────────────────────────────────
+    df["pred"] = clf_final.predict(X)
+    pos_idx = df[df["pred"] == 1].index
+
     if pos_idx.empty:
-        logger.warning("⚠️ No positive cases for regression. Skipping regressor training.")
+        logger.warning("⚠️ No positive predictions for regressor training. Skipping.")
         return
+
     X_reg = X.loc[pos_idx]
-    y_reg = df_reg.loc[pos_idx, "return"] if "return" in df_reg.columns else df_reg.loc[pos_idx, "target"]
+    if "return" in df.columns:
+        y_reg = df.loc[pos_idx, "return"]
+    elif "profit" in df.columns:
+        y_reg = df.loc[pos_idx, "profit"]
+    else:
+        logger.error("❌ No return or profit column found for regressor.")
+        return
 
     X_train_r, X_test_r, y_train_r, y_test_r = train_test_split(
         X_reg, y_reg, test_size=settings.test_size, random_state=settings.random_state
@@ -83,18 +112,33 @@ def train_dual_model(df_name: str = "training_data"):
         preds = reg.predict(X_test_r)
         return -mean_squared_error(y_test_r, preds)
 
-    # Regressor HPO
-    logger.info(f"🔍 Running regressor HPO for {settings.hpo_trials} trials...")
+    logger.info(f"🔍 Running regressor HPO for {settings.meta_top_n} trials...")
     study_reg = optuna.create_study(direction="maximize")
-    study_reg.optimize(objective_reg, n_trials=settings.hpo_trials)
+    study_reg.optimize(objective_reg, n_trials=settings.meta_top_n)
+
     best_reg_params = study_reg.best_params
     logger.success(f"✅ Best regressor params: {best_reg_params}")
+
     reg_final = RandomForestRegressor(**best_reg_params, random_state=settings.random_state, n_jobs=-1)
     reg_final.fit(X_train_r, y_train_r)
-    reg_preds = reg_final.predict(X_test_r)
-    mse = mean_squared_error(y_test_r, reg_preds)
-    logger.info(f"Regressor test MSE: {mse:.4f}")
-    save_model("dual_regressor", {"model": reg_final, "features": list(X_reg.columns), "params": best_reg_params})
+    mse = mean_squared_error(y_test_r, reg_final.predict(X_test_r))
+    logger.info(f"📉 Regressor MSE: {mse:.4f}")
+
+    save_model(settings.dual_regressor_model_name, {
+        "model": reg_final,
+        "features": list(X_reg.columns),
+        "params": best_reg_params
+    }, meta={
+        "type": "regressor",
+        "algo": "RandomForest",
+        "mse": round(mse, 6),
+        "trained_at": str(pd.Timestamp.now()),
+        "features": list(X_reg.columns),
+        "params": best_reg_params
+    })
+
+    logger.success("✅ Dual model training complete.")
+
 
 if __name__ == "__main__":
     train_dual_model()

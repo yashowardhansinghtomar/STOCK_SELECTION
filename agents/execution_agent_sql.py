@@ -5,12 +5,13 @@ import time
 from datetime import datetime
 
 import pandas as pd
-
+from core.time_context import get_simulation_date
 from core.config import settings
 from core.data_provider import load_data, fetch_stock_data
 from core.logger import logger
 from db.conflict_utils import insert_with_conflict_handling
 from db.postgres_manager import run_query
+from services.exit_policy_evaluator import get_exit_probability  # ✅ Updated
 
 CAPITAL_PER_TRADE = settings.capital_per_trade     # e.g. 10000
 TABLE_TRADES      = settings.trades_table          # e.g. "trades"
@@ -33,40 +34,38 @@ class ExecutionAgentSQL:
         self.session = session
         self.dev_mode = os.getenv("DEV_MODE") == "1"
         self.dry_run = dry_run
+        self.today = pd.to_datetime(get_simulation_date())
+        self.now_str = self.today.strftime("%Y-%m-%d %H:%M")
+        self.today_str = self.today.strftime("%Y-%m-%d")
 
     def load_signals(self) -> pd.DataFrame:
         df = safe_load_table(TABLE_RECS, settings.recommendation_columns)
 
-        # ensure the flag column is present
         if "trade_triggered" not in df.columns:
             logger.error("❌ Missing required column `trade_triggered` in recommendations; cannot filter signals.")
             return pd.DataFrame()
 
-        # pick only the ones flagged to trade
         df = df[df["trade_triggered"] == 1]
         df = df.rename(columns={"stock": "symbol"})
 
-        # if there simply aren't any signals today, that's fine—we'll only do exits.
         if df.empty:
             logger.info("⚠️ No trade-triggered recommendations for today; proceeding with exits only.")
         else:
             logger.info(f"📈 Loaded {len(df)} trade signals for execution.")
 
-        # in dev mode, only take the top N
         return df.head(settings.top_n) if self.dev_mode else df
 
-
     def load_open_positions(self) -> pd.DataFrame:
-        df = safe_load_table(TABLE_OPEN_POS, ["stock", "entry_price", "entry_date"])
+        df = safe_load_table(TABLE_OPEN_POS, ["stock", "entry_price", "entry_date", "strategy_config"])
         if "symbol" in df.columns:
             df = df.rename(columns={"symbol": "stock"})
         if "stock" not in df.columns:
             logger.warning("⚠️ Open-positions table has no 'stock' column; returning empty positions.")
-            return pd.DataFrame(columns=["stock", "entry_price", "entry_date"])
-        for col in ("entry_price", "entry_date"):
+            return pd.DataFrame(columns=["stock", "entry_price", "entry_date", "strategy_config"])
+        for col in ("entry_price", "entry_date", "strategy_config"):
             if col not in df.columns:
                 df[col] = None
-        return df[["stock", "entry_price", "entry_date"]]
+        return df[["stock", "entry_price", "entry_date", "strategy_config"]]
 
     def load_today_ohlc(self, symbol: str):
         df = fetch_stock_data(symbol, days=1)
@@ -92,32 +91,30 @@ class ExecutionAgentSQL:
             if not ohlc:
                 remaining.append(pos)
                 continue
-            _, _, low, _ = ohlc
 
-            hist = fetch_stock_data(sym, days=settings.exit_lookback_days)
-            if hist.empty or len(hist) < settings.exit_ma_window:
-                remaining.append(pos)
-                continue
+            proba = get_exit_probability(pos)
 
-            hist["SMA"] = hist["close"].rolling(settings.exit_ma_window).mean()
-            sma = hist.iloc[-1]["SMA"]
-            if pd.isna(sma) or low >= sma:
-                remaining.append(pos)
-            else:
-                logger.success(f"✅ Exiting {sym} at SMA{settings.exit_ma_window}: {sma:.2f}")
+            if proba >= 0.6:
+                logger.success(f"✅ Exiting {sym} with high confidence ({proba:.2f})")
                 exited.append({
-                    "timestamp":       datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "timestamp":       self.now_str,
                     "stock":           sym,
                     "action":          "sell",
-                    "price":           sma,
+                    "price":           ohlc[-1],
                     "strategy_config": pos.get("strategy_config", ""),
-                    "signal_reason":   f"low < SMA{settings.exit_ma_window}",
+                    "signal_reason":   "ml_exit_high_confidence",
                     "source":          "execution_agent",
-                    "imported_at":     datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "imported_at":     self.now_str,
                 })
+            elif proba >= 0.4:
+                logger.info(f"⏳ Skipping borderline exit for {sym} (proba={proba:.2f})")
+                remaining.append(pos)
+            else:
+                logger.info(f"🚫 Holding {sym}, exit proba too low ({proba:.2f})")
+                remaining.append(pos)
 
         remaining_df = pd.DataFrame(remaining, columns=open_positions.columns)
-        exited_df    = pd.DataFrame(exited)
+        exited_df = pd.DataFrame(exited)
         return remaining_df, exited_df
 
     def enter_trades(self, signals: pd.DataFrame, open_positions: pd.DataFrame):
@@ -142,39 +139,45 @@ class ExecutionAgentSQL:
 
             logger.success(f"✅ Entering {sym} at {close:.2f}")
             new_positions.append({
-                "stock":       sym,
+                "stock": sym,
                 "entry_price": close,
-                "entry_date":  datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "entry_date":  self.now_str,
+                "strategy_config": sig.get("strategy_config", ""),
+                "interval": sig.get("interval", "day")  # 🆕
             })
+
+
             entry_logs.append({
-                "timestamp":       datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "timestamp":       self.now_str,
                 "stock":           sym,
                 "action":          "buy",
                 "price":           close,
                 "strategy_config": sig.get("strategy_config", ""),
                 "signal_reason":   "signal_generated",
                 "source":          sig.get("source", "execution_agent"),
-                "imported_at":     datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "imported_at":     self.now_str,
+                "interval":        sig.get("interval", "day")  # 🆕 Add interval tag
             })
+
             param_preds.append({
-                "date":            datetime.now().date(),
+                "date":            self.today.date(),
                 "stock":           sym,
                 "sma_short":       sig.get("sma_short"),
                 "sma_long":        sig.get("sma_long"),
                 "rsi_thresh":      sig.get("rsi_thresh"),
                 "confidence":      sig.get("confidence"),
                 "expected_sharpe": sig.get("sharpe"),
-                "created_at":      datetime.now(),
+                "created_at":      self.today
             })
             if pd.notna(sig.get("confidence")):
                 filter_preds.append({
-                    "date":       datetime.now().date(),
+                    "date":       self.today.date(),
                     "stock":      sym,
                     "score":      sig.get("confidence"),
                     "rank":       sig.get("rank"),
                     "confidence": sig.get("confidence"),
                     "decision":   "buy",
-                    "created_at": datetime.now()
+                    "created_at": self.today
                 })
 
         if entry_logs and not self.dry_run:

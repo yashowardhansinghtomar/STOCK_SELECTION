@@ -1,8 +1,9 @@
+# agents/strategy_agent.py
 from datetime import datetime
 import random
-
 import pandas as pd
 from sqlalchemy.orm import Session
+from core.predict_entry_exit_config import predict_entry_exit_config
 from core.data_provider import load_data
 from core.config import settings
 from core.logger import logger
@@ -12,9 +13,9 @@ from db.models import StockFeature, ParamModelPrediction
 from core.grid_predictor import predict_grid_config
 from core.model_io import load_model
 from db.db import SessionLocal
-
 from agents.time_series_agent import TimeSeriesAgent
-
+from core.time_context import get_simulation_date
+from core.feature_enricher_multi import enrich_multi_interval_features
 
 def is_valid_for_model(df: pd.DataFrame, required: list, min_samples: int = 1) -> bool:
     if df is None or df.empty:
@@ -32,7 +33,9 @@ def is_valid_for_model(df: pd.DataFrame, required: list, min_samples: int = 1) -
 class StrategyAgent:
     def __init__(self, session: Session = None):
         self.session = session or SessionLocal()
-        self.today = datetime.now().date()
+        self.today = pd.to_datetime(get_simulation_date())
+        self.today_str = self.today.strftime("%Y-%m-%d")
+        self.today_date = self.today.date()
 
         self.model_dir = settings.model_dir
         self.ml_success = 0
@@ -50,7 +53,7 @@ class StrategyAgent:
         recs = (
             self.session.query(StockFeature)
             .filter(StockFeature.stock == stock)
-            .filter(StockFeature.date <= self.today)
+            .filter(StockFeature.date <= self.today_date)
             .all()
         )
         if not recs:
@@ -60,36 +63,47 @@ class StrategyAgent:
 
     def evaluate(self, stock: str) -> dict:
         logger.info(f"🔍 Evaluating {stock}")
-        if stock.endswith(".NS"):
-            stock = stock[:-3]
+        stock = stock.replace(".NS", "")
 
-        df_feat = self.fetch_features(stock)
-        if not df_feat.empty and is_valid_for_model(df_feat, self.filter_features):
-            preds = predict_dual_model(stock, df_feat)
-            if preds:
-                top = preds[0]
-                self.ml_success += 1
-                logger.info(f"✅ ML signal for {stock}: {top}")
+        for interval in ["day", "60m", "15m"]:
+            enriched = enrich_multi_interval_features(stock, self.today, intervals=[interval])
+            if enriched.empty or not is_valid_for_model(enriched, self.filter_features):
+                continue
 
-                self.session.merge(ParamModelPrediction(
-                    date=self.today,
-                    stock=stock,
-                    sma_short=top['recommended_config'].get('sma_short'),
-                    sma_long=top['recommended_config'].get('sma_long'),
-                    rsi_thresh=top['recommended_config'].get('rsi_thresh'),
-                    confidence=top.get('confidence'),
-                    expected_sharpe=top.get('predicted_return'),
-                ))
-                self.session.commit()
+            config = predict_entry_exit_config(enriched)
+            if not config or config.get("entry_signal") != 1:
+                continue
 
-                return {
-                    **top,
-                    "date": self.today.strftime("%Y-%m-%d"),
-                    "stock": stock,
-                    "trade_triggered": int(top.get("trade_triggered", 1)),
-                    "strategy_config": top.get("recommended_config", {}),
-                    "source": "ml"
-                }
+            strategy_config = config.get("exit_rule", {})
+            preds = predict_dual_model(stock, enriched)
+            if not preds:
+                continue
+
+            top = preds[0]
+            signal = {
+                **top,
+                "date": self.today_str,
+                "stock": stock,
+                "interval": interval,
+                "strategy_config": strategy_config,
+                "exit_rule": strategy_config,
+                "trade_triggered": int(top.get("trade_triggered", 1)),
+                "source": "entry_exit_model"
+            }
+
+            self.ml_success += 1
+            self.session.merge(ParamModelPrediction(
+                date=self.today_date,
+                stock=stock,
+                sma_short=strategy_config.get("sma_short"),
+                sma_long=strategy_config.get("sma_long"),
+                rsi_thresh=strategy_config.get("rsi_thresh"),
+                confidence=top.get("confidence"),
+                expected_sharpe=top.get("predicted_return"),
+            ))
+            self.session.commit()
+            logger.info(f"✅ ML signal for {stock}: {signal}")
+            return signal
 
         result = self._handle_grid_fallback(stock)
         if result:
@@ -100,7 +114,6 @@ class StrategyAgent:
             return {}
 
         ts_agent = TimeSeriesAgent(stock, self.today)
-
         try:
             pred_price = ts_agent.predict()
         except Exception as e:
@@ -109,13 +122,11 @@ class StrategyAgent:
             return {}
 
         if pred_price is not None:
-            hist = load_data("stock_price_history").copy()
+            hist = load_data("stock_price_history")
             hist["date"] = pd.to_datetime(hist["date"])
             if hist["date"].dt.tz is not None:
-                hist["date"] = hist["date"].dt.tz_convert(None)
-                hist["date"] = hist["date"].dt.tz_localize(None)
-            ts_today = pd.Timestamp(self.today)
-            cur_series = hist[(hist.symbol == stock) & (hist.date <= ts_today)].close
+                hist["date"] = hist["date"].dt.tz_convert(None).dt.tz_localize(None)
+            cur_series = hist[(hist.symbol == stock) & (hist.date <= self.today)].close
             if not cur_series.empty:
                 current_price = cur_series.iloc[-1]
                 gap = settings.ts_threshold
@@ -129,7 +140,7 @@ class StrategyAgent:
                     self.ts_fallback += 1
                     logger.info(f"🔄 TS fallback {signal.upper()} for {stock}: predicted {pred_price}")
                     return {
-                        "date": self.today.strftime("%Y-%m-%d"),
+                        "date": self.today_str,
                         "stock": stock,
                         "signal": signal,
                         "model": "ts_forecast",
@@ -147,7 +158,7 @@ class StrategyAgent:
                         "sma_long": None,
                         "rsi_thresh": None,
                         "strategy_config": {},
-                        "trade_triggered": int(1),
+                        "trade_triggered": 1,
                         "source": "ts_fallback"
                     }
 
@@ -155,11 +166,10 @@ class StrategyAgent:
 
     def _handle_grid_fallback(self, stock: str) -> dict:
         df = load_data(settings.recommendations_table)
-        today = self.today.strftime("%Y-%m-%d")
         if df is None or df.empty:
             return {}
 
-        rec = df[(df.stock == stock) & (df.date == today)]
+        rec = df[(df.stock == stock) & (df.date == self.today_str)]
         if rec.empty:
             return {}
 
@@ -173,7 +183,7 @@ class StrategyAgent:
         self.grid_fallback += 1
         logger.info(f"🔄 Grid fallback for {stock}: {strategy_config}")
         return {
-            "date": today,
+            "date": self.today_str,
             "stock": stock,
             **strategy_config,
             "total_return": row.get("predicted_return"),
@@ -185,7 +195,7 @@ class StrategyAgent:
             "max_drawdown": row.get("max_drawdown"),
             "sharpe": row.get("sharpe"),
             "trade_count": row.get("trade_count"),
-            "trade_triggered": int(1),
+            "trade_triggered": 1,
             "strategy_config": strategy_config
         }
 
