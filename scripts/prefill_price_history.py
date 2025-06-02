@@ -2,8 +2,8 @@
 
 import pandas as pd
 from datetime import datetime
-from core.logger import logger
-from core.data_provider import fetch_stock_data, save_data
+from core.logger.logger import logger
+from core.data_provider.data_provider import fetch_stock_data, save_data
 from integrations.zerodha_fetcher import INTERVAL_LIMIT_DAYS
 from pathlib import Path
 
@@ -32,9 +32,9 @@ def prefill_all():
                 if df is not None and not df.empty:
                     logger.success(f"✅ {sym} [{interval}] → {len(df)} rows")
                 else:
-                    logger.warning(f"⚠️ {sym} [{interval}] → No data")
+                    logger.warnings(f"⚠️ {sym} [{interval}] → No data")
             except Exception as e:
-                logger.warning(f"❌ {sym} [{interval}] failed: {e}")
+                logger.warnings(f"❌ {sym} [{interval}] failed: {e}")
 
     logger.success("🎯 Done pre-filling price history.")
 

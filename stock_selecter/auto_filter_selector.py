@@ -4,10 +4,10 @@ import os
 from datetime import datetime
 import pandas as pd
 
-from core.logger import logger
-from core.config import settings
-from core.data_provider import load_data
-from core.time_context import get_simulation_date
+from core.logger.logger import logger
+from core.config.config import settings
+from core.data_provider.data_provider import load_data
+from core.time_context.time_context import get_simulation_date
 from stock_selecter.stock_screener import run_stock_filter
 from stock_selecter.fallback_technical_filter import run_technical_filter
 
@@ -39,7 +39,7 @@ def auto_select_filter() -> str:
                 chosen_filter = f
                 break
             else:
-                logger.warning(f"❌ Filter '{f}' returned only {count} stocks (<{MIN_REQUIRED_STOCKS}).")
+                logger.warnings(f"❌ Filter '{f}' returned only {count} stocks (<{MIN_REQUIRED_STOCKS}).")
         else:
             raise RuntimeError(f"🚫 No filter produced ≥{MIN_REQUIRED_STOCKS} stocks.")
     else:
@@ -50,7 +50,7 @@ def auto_select_filter() -> str:
         if len(filtered_df) < MIN_REQUIRED_STOCKS:
             for symbol, reasons in rejected_reasons.items():
                 reason_str = " | ".join(r if isinstance(r, str) else str(r) for r in reasons) if isinstance(reasons, (list, tuple)) else str(reasons)
-                logger.warning(f"{symbol}: ❌ {reason_str}")
+                logger.warnings(f"{symbol}: ❌ {reason_str}")
             raise RuntimeError(f"🚫 Fallback technical filter produced <{MIN_REQUIRED_STOCKS} stocks.")
 
         logger.success(f"✅ Fallback technical filter selected {len(filtered_df)} stocks.")

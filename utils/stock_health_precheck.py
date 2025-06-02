@@ -1,7 +1,7 @@
 # utils/stock_health_precheck.py
 
-from core.data_provider import load_data
-from core.logger import logger
+from core.data_provider.data_provider import load_data
+from core.logger.logger import logger
 
 def is_stock_tradeable(stock: str, verbose=False) -> bool:
     try:

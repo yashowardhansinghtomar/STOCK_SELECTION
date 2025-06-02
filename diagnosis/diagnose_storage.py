@@ -1,7 +1,7 @@
 # diagnose_storage.py
 
 import os, sqlite3
-from core.data_provider import load_data
+from core.data_provider.data_provider import load_data
 from pathlib import Path
 
 DB_FILE = Path("project_data") / "trading_system.db"

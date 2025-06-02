@@ -1,8 +1,8 @@
 # models/ml_training_sql.py
 from core.model_io import save_model
-from core.logger import logger
-from core.data_provider import load_data, save_data
-from core.config import settings
+from core.logger.logger import logger
+from core.data_provider.data_provider import load_data, save_data
+from core.config.config import settings
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -10,7 +10,7 @@ from sklearn.metrics import mean_squared_error
 import pandas as pd
 
 # Add at top
-INTERVALS = ["day", "60m", "15m"]
+INTERVALS = ["day", "60minute", "15minute"]
 SUFFIXES = ["_day", "_60m", "_15m"]
 
 def merge_intervals(df_list):
@@ -33,7 +33,7 @@ def train_meta_model():
         return
 
     # Load and merge multi-interval features
-    from core.feature_enricher_multi import enrich_multi_interval_features
+    from core.feature_engineering.feature_enricher_multi import enrich_multi_interval_features
 
     merged_rows = []
     for _, row in df_base.iterrows():

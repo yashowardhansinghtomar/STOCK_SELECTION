@@ -1,70 +1,82 @@
 # models/train_stock_filter_model.py
-import optuna
+
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+import lightgbm as lgb
+import joblib
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, roc_auc_score
+from core.data_provider.data_provider import load_data, save_data
+from db.postgres_manager import run_query
+from core.logger.logger import logger
 
-from core.data_provider import load_data
-from core.model_io import save_model
-from core.logger import logger
-from core.config import settings
+FEATURE_TABLE = "stock_features_day"
+RECS_TABLE = "recommendations"
+PRED_TABLE = "filter_model_predictions"
+MODEL_PATH = "models/filter_model.lgb"
 
-def train_stock_filter_model(n_trials: int = 30):
-    """
-    Train a RandomForest-based stock filter model using features.
-    """
-    df = load_data("training_data")
-    if df is None or df.empty:
-        logger.error("❌ No training data found. Cannot train filter model.")
+# ────────────────────────────────────────────────────────────────────────────────
+# Config
+# ────────────────────────────────────────────────────────────────────────────────
+FEATURE_COLS = [
+    "sma_short", "sma_long", "rsi_thresh", "macd", "vwap", "atr_14",
+    "bb_width", "macd_histogram", "price_compression", "volatility_10",
+    "volume_spike", "vwap_dev", "stock_encoded"
+]
+
+LABEL_COL = "label"
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Main
+# ────────────────────────────────────────────────────────────────────────────────
+def train_filter_model():
+    recs = load_data(RECS_TABLE)
+    feats = load_data(FEATURE_TABLE)
+
+    if recs.empty:
+        logger.warning("No past recommendations yet — skipping filter training for now.")
+        return
+    if feats.empty:
+        logger.warning("Feature data is missing. Aborting training.")
         return
 
-    if settings.use_fundamentals:
-        required_cols = ["pe_ratio", "debt_to_equity", "roe", "earnings_growth", "market_cap"]
-    else:
-        required_cols = [c for c in df.columns if c not in ["stock", "date", "target"]
-                         and not any(c in f for f in ["pe_ratio", "debt", "roe", "market_cap", "earnings"])]
+    # Join and filter
+    merged = recs.merge(feats, left_on=["stock", "date"], right_on=["stock", "date"])
+    merged = merged.dropna(subset=FEATURE_COLS + [LABEL_COL])
+    logger.info(f"Training on {len(merged)} rows.")
 
-    missing = [c for c in required_cols if c not in df.columns]
-    if missing:
-        logger.error(f"❌ Missing required columns: {missing}")
+    if len(merged) < 100:
+        logger.warning("Not enough labeled data to train a robust model. Aborting.")
         return
 
-    X = df[required_cols].fillna(0)
-    y = df["target"]
+    X = merged[FEATURE_COLS]
+    y = merged[LABEL_COL]
 
-    def objective(trial):
-        n_estimators = trial.suggest_int("n_estimators", 50, 300)
-        max_depth = trial.suggest_int("max_depth", 3, 20)
-        max_features = trial.suggest_categorical("max_features", ["sqrt", "log2", None])
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
-        model = RandomForestClassifier(
-            n_estimators=n_estimators,
-            max_depth=max_depth,
-            max_features=max_features,
-            random_state=42,
-            n_jobs=-1
-        )
-        model.fit(X_train, y_train)
-        return accuracy_score(y_val, model.predict(X_val))
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
 
-    logger.info(f"🔍 Starting HPO for {n_trials} trials...")
-    study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=n_trials)
-
-    best_params = study.best_params
-    logger.success(f"✅ Best HPO params: {best_params}")
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = RandomForestClassifier(**best_params, random_state=42, n_jobs=-1)
+    model = lgb.LGBMClassifier(n_estimators=100, max_depth=6, random_state=42)
     model.fit(X_train, y_train)
 
-    save_model("filter_model", {"model": model, "features": required_cols, "params": best_params})
+    y_pred = model.predict(X_val)
+    y_proba = model.predict_proba(X_val)[:, 1]
 
-    preds = model.predict(X_test)
-    acc = accuracy_score(y_test, preds)
-    logger.success(f"✅ Filter model trained. Test Accuracy: {acc:.4f}")
-    logger.info("\n" + classification_report(y_test, preds))
+    logger.info("Model Performance on Validation Set:")
+    logger.info("\n" + classification_report(y_val, y_pred))
+    logger.info(f"ROC AUC: {roc_auc_score(y_val, y_proba):.3f}")
+
+    # Save predictions for evaluation/debugging (optional)
+    X_val = X_val.copy()
+    X_val["score"] = y_proba
+    X_val["rank"] = X_val["score"].rank(pct=True)
+    X_val["confidence"] = X_val["score"]
+    X_val["decision"] = (X_val["score"] > 0.5).map({True: "buy", False: "reject"})
+    X_val["stock"] = merged.iloc[X_val.index]["stock"].values
+    X_val["date"] = merged.iloc[X_val.index]["date"].values
+
+    save_data(X_val[["date", "stock", "score", "rank", "confidence", "decision"]], PRED_TABLE, if_exists="replace")
+
+    # Save the trained model to disk
+    joblib.dump(model, MODEL_PATH)
+    logger.success("Filter model trained and saved. Predictions written to DB.")
 
 if __name__ == "__main__":
-    train_stock_filter_model()
+    train_filter_model()

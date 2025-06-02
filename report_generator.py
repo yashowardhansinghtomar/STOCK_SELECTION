@@ -1,4 +1,4 @@
-from core.logger import logger
+from core.logger.logger import logger
 # report_generator.py
 import os
 import pandas as pd
@@ -91,7 +91,7 @@ def analyze_open_positions(open_df):
     if avg_return > 5:
         logger.info("💡 Strategy Insight: Positions are performing well. Consider increasing size.")
     elif avg_return < -5:
-        logger.warning("⚠️ Strategy Insight: Negative return. Consider adjusting filters or parameters.")
+        logger.warnings("⚠️ Strategy Insight: Negative return. Consider adjusting filters or parameters.")
     else:
         logger.info("🧠 Strategy Insight: Neutral zone. Monitor closely.")
 

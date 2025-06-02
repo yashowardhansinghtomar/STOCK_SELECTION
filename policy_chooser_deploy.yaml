@@ -1,0 +1,12 @@
+version: 2.0
+deployments:
+  - name: daily-policy-chooser
+    flow: core/predict/policy_chooser.py:policy_chooser_flow
+    schedule:
+      cron: "0 23 * * *"
+      timezone: "Asia/Kolkata"
+    tags: ["daily", "policy"]
+    work_pool:
+      name: default-agent-pool
+      work_queue_name: default
+      job_variables: {}

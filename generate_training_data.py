@@ -1,4 +1,4 @@
-from core.logger import logger
+from core.logger.logger import logger
 # generate_training_data.py
 import pandas as pd
 import os

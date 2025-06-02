@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
-from agents.execution_agent_sql import ExecutionAgentSQL
+from agents.execution.execution_agent_sql import ExecutionAgentSQL
 from predictive_trader.curve_predictor import generate_curves_for_list
 from predictive_trader.curve_signal_generator import generate_signals_from_curves
-from core.time_context import set_simulation_date, clear_simulation_date
-from core.logger import logger
+from core.time_context.time_context import set_simulation_date, clear_simulation_date
+from core.logger.logger import logger
 
 STOCK_LIST = ["RELIANCE", "TCS", "INFY", "ICICIBANK", "HDFCBANK"]
 SIMULATE_NUM_DAYS = 20

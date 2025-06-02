@@ -1,9 +1,9 @@
 # models/ml_dual_model_prediction_sql.py
-from core.data_provider import load_data
-from core.logger import logger
-from core.time_context import get_simulation_date
+from core.data_provider.data_provider import load_data
+from core.logger.logger import logger
+from core.time_context.time_context import get_simulation_date
 from core.model_io import load_model
-from core.config import settings
+from core.config.config import settings
 import pandas as pd
 
 

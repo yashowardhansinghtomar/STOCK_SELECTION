@@ -1,4 +1,4 @@
-from core.logger import logger
+from core.logger.logger import logger
 # utils/file_io.py
 import os
 import pandas as pd

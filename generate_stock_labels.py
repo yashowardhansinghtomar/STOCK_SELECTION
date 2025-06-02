@@ -1,4 +1,4 @@
-from core.logger import logger
+from core.logger.logger import logger
 # generate_stock_labels.py
 import os
 import pandas as pd
@@ -14,7 +14,7 @@ def generate_labels():
 
     df = pd.read_csv(TRADES_FILE)
     if df.empty or "stock" not in df:
-        logger.warning("⚠️ No data in trade logs.")
+        logger.warnings("⚠️ No data in trade logs.")
         return
 
     df = df[df["action"] == "sell"].copy()

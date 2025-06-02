@@ -9,7 +9,7 @@ etc.) are as expected.
 import pandas as pd
 import pytest
 from analysis.feedback_loop import main as feedback_main
-from core import data_provider
+from core.data import data_provider
 
 @pytest.fixture
 def dummy_feedback_data():

@@ -1,11 +1,11 @@
 # stock_selecter/stock_screener.py
 
-from core.data_provider import load_data, save_data
-from core.logger       import logger
-from core.config       import settings
+from core.data_provider.data_provider import load_data, save_data
+from core.logger.logger       import logger
+from core.config.config       import settings
 import pandas as pd
 from datetime import datetime
-from core.time_context import get_simulation_date
+from core.time_context.time_context import get_simulation_date
 
 # ─── your existing filter functions ──────────────────────────────────────────
 def filter_growth_stocks(df):
@@ -61,7 +61,7 @@ def run_stock_filter(
     3) Persist only 'stock' (+ timestamp) back to SQL
     """
     if not settings.use_fundamentals:
-        logger.warning("⚠️ use_fundamentals=False — skipping filter.")
+        logger.warnings("⚠️ use_fundamentals=False — skipping filter.")
         return pd.DataFrame()
     sim_date = pd.to_datetime(get_simulation_date()).normalize()
     df = load_data(settings.fundamentals_table)
@@ -69,7 +69,7 @@ def run_stock_filter(
         df["imported_at"] = pd.to_datetime(df["imported_at"]).dt.normalize()
         df = df[df["imported_at"] <= sim_date]
     if df is None or df.empty:
-        logger.warning("⚠️ No fundamental data found in SQL.")
+        logger.warnings("⚠️ No fundamental data found in SQL.")
         return pd.DataFrame()
 
     logger.info(f"Loaded {len(df)} rows from '{settings.fundamentals_table}'")
@@ -97,7 +97,7 @@ def run_stock_filter(
 
     filtered = filters[filter_name](df)
     if filtered.empty:
-        logger.warning(f"⚠️ Filter '{filter_name}' returned no rows.")
+        logger.warnings(f"⚠️ Filter '{filter_name}' returned no rows.")
         return filtered
 
     # Build a slim output DF for SQL

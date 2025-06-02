@@ -6,9 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import itertools
 
-from core.logger import logger
-from core.data_provider import load_data, save_data
-from core.config import settings
+from core.logger.logger import logger
+from core.data_provider.data_provider import load_data, save_data
+from core.config.config import settings
 
 def load_combined_grid_data() -> pd.DataFrame:
     """
@@ -43,7 +43,7 @@ def train_meta_model():
     y = df[target]
 
     if len(X) < settings.meta_min_samples:
-        logger.warning("[SKIP] Not enough samples to train meta model.")
+        logger.warnings("[SKIP] Not enough samples to train meta model.")
         return
 
     # Train/test split

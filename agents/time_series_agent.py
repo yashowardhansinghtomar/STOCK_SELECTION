@@ -7,16 +7,16 @@ from pmdarima.arima import ARIMA
 import warnings
 import traceback
 
-from core.config import settings
-from core.data_provider import load_data
+from core.config.config import settings
+from core.data_provider.data_provider import load_data
 from core.model_io import save_model, load_model
-from core.logger import logger
+from core.logger.logger import logger
 
 # 🔧 Always capture warnings as logs
 warnings.simplefilter("always")
 
 def warning_to_log(message, category, filename, lineno, file=None, line=None):
-    logger.warning(f"⚠️ [PYTHON WARNING] {category.__name__}: {message} @ {filename}:{lineno}")
+    logger.warnings(f"⚠️ [PYTHON WARNING] {category.__name__}: {message} @ {filename}:{lineno}")
 
 warnings.showwarning = warning_to_log
 
@@ -58,7 +58,7 @@ class TimeSeriesAgent:
 
         hist = pd.to_numeric(hist, errors="coerce").dropna()
         if len(hist) < sum(self.order) + 1:
-            logger.warning(f"⚠️ TS training skipped for {self.symbol}: insufficient data")
+            logger.warnings(f"⚠️ TS training skipped for {self.symbol}: insufficient data")
             return None
 
         logger.debug(f"[DEBUG] Type: {type(hist)}, Columns: {getattr(hist, 'columns', None)}")

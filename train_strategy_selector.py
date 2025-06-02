@@ -1,4 +1,4 @@
-from core.logger import logger
+from core.logger.logger import logger
 # train_strategy_selector.py
 import pandas as pd
 import pickle

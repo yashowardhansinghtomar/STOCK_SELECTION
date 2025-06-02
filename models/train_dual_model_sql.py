@@ -6,9 +6,9 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from core.logger import logger
-from core.config import settings
-from core.data_provider import load_data
+from core.logger.logger import logger
+from core.config.config import settings
+from core.data_provider.data_provider import load_data
 from core.model_io import save_model
 
 
@@ -83,7 +83,7 @@ def train_dual_model(df_name: str = "training_data"):
     pos_idx = df[df["pred"] == 1].index
 
     if pos_idx.empty:
-        logger.warning("⚠️ No positive predictions for regressor training. Skipping.")
+        logger.warnings("⚠️ No positive predictions for regressor training. Skipping.")
         return
 
     X_reg = X.loc[pos_idx]

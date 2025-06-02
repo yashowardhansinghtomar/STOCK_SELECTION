@@ -1,0 +1,35 @@
+{
+  "excluded_dirs": ["__pycache__", ".pytest_cache", ".git", ".venv", "node_modules", "build", "dist", "docs"],
+  "project_root_packages": ["your_project_root_package1", "another_root_pkg"],
+  "io_functions": {
+    "data_read": ["load_data", "pd.read_csv", "pd.read_parquet", "spark.read.load"],
+    "data_write": ["save_data", "df.to_csv", "df.to_parquet", "spark.write.save"],
+    "model_load": ["load_model", "torch.load", "joblib.load"],
+    "model_save": ["save_model", "torch.save", "joblib.dump"]
+  },
+  "db_table_patterns": [
+    "[a-zA-Z_][a-zA-Z0-9_]*_table",
+    "fact_[a-zA-Z0-9_]+",
+    "dim_[a-zA-Z0-9_]+"
+  ],
+  "feature_patterns": [
+    "feature_engineering\\.apply_(\\w+)",
+    "df\\[['\"](feature_\\w+)['\"]\\]"
+  ],
+  "custom_tags_from_path": [
+    {"pattern": "/agents/", "tag": "module-type:agent"},
+    {"pattern": "/models/", "tag": "module-type:model"},
+    {"pattern": "/pipelines/", "tag": "module-type:pipeline"},
+    {"pattern": "/tests/", "tag": "module-type:test"}
+  ],
+  "flags": {
+    "include_docstrings": true,
+    "include_code_metrics": true,
+    "include_full_code_structure": false,
+    "generate_vocab_file": true
+  },
+  "risk_thresholds": {
+      "loc": 300,
+      "complexity": 15
+  }
+}

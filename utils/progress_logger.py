@@ -3,31 +3,22 @@
 import sqlite3
 from datetime import datetime
 
-def log_model_progress(sharpe_ratio, accuracy, win_rate, num_trades, db_path="project_data/trading_system.db"):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+DB_PATH = "data/progress_log.db"
 
+def log_model_progress(model_name: str, loss: float, buffer_size: int):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS model_progress (
-            date TEXT,
-            sharpe_ratio REAL,
-            accuracy REAL,
-            num_trades INTEGER,
-            win_rate REAL
+        CREATE TABLE IF NOT EXISTS model_training_progress (
+            timestamp TEXT,
+            model TEXT,
+            loss REAL,
+            buffer_size INT
         )
     """)
-
-    cursor.execute("""
-        INSERT INTO model_progress (date, sharpe_ratio, accuracy, num_trades, win_rate)
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        sharpe_ratio,
-        accuracy,
-        num_trades,
-        win_rate
-    ))
-
+    cursor.execute(
+        "INSERT INTO model_training_progress (timestamp, model, loss, buffer_size) VALUES (?, ?, ?, ?)",
+        (datetime.utcnow().isoformat(), model_name, loss, buffer_size)
+    )
     conn.commit()
     conn.close()
-    print("✅ Model performance logged to SQL")

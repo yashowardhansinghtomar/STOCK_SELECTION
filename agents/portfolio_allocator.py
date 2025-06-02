@@ -1,24 +1,60 @@
-from core.data_provider import load_data, save_data
-from core.logger import logger
-from core.config import settings
-import pandas as pd
 # agents/portfolio_allocator.py
+
+import pandas as pd
+from core.logger.logger import logger
+from core.config.config import settings
+from core.data_provider.data_provider import load_data
+from datetime import datetime
+
 class PortfolioAllocatorAgent:
-    def __init__(self, total_capital=100000, max_per_trade_pct=0.1, confidence_weighted=True):
-        self.total_capital = total_capital
-        self.max_per_trade = total_capital * max_per_trade_pct
-        self.confidence_weighted = confidence_weighted
+    def __init__(self, max_per_trade=10000, max_holdings=10, sector_limits=None):
+        self.max_per_trade = max_per_trade
+        self.max_holdings = max_holdings
+        self.prefix = "🏦 [ALLOCATOR] "
+        self.today = pd.to_datetime(datetime.now()).normalize()
 
-    def allocate(self, recommendations: pd.DataFrame):
-        recommendations["allocated_capital"] = (recommendations["confidence"] / recommendations["confidence"].sum()) * self.total_capital
-        recommendations["allocated_capital"] = recommendations["allocated_capital"].clip(upper=settings.capital_per_trade)
+        # Optional sector-level limits (e.g., {"IT": 0.3, "Finance": 0.2})
+        self.sector_limits = sector_limits or {}
 
-        logger.info(f"🧮 Allocated capital: {recommendations[['stock','allocated_capital']]}")
-        return recommendations
+    def load_open_positions(self):
+        df = load_data(settings.open_positions_table)
+        if df is None or df.empty:
+            return pd.DataFrame(columns=["stock", "entry_price", "entry_date", "strategy_config"])
+        return df
 
+    def filter_signals(self, signals: pd.DataFrame) -> pd.DataFrame:
+        logger.info(f"{self.prefix}"+str(f"Evaluating {len(signals)} signals for allocation control..."))
+        open_pos = self.load_open_positions()
+        held = set(open_pos["stock"].tolist())
 
-if __name__ == "__main__":
-    agent = PortfolioAllocatorAgent(total_capital=50000)
-    for conf in [0.5, 0.7, 0.9, 1.0]:
-        amount = agent.allocate(confidence=conf)
-        logger.info(f"Confidence: {conf:.2f} → Allocation: ₹{amount}")
+        remaining_budget = self.max_holdings - len(held)
+        if remaining_budget <= 0:
+            logger.warnings("Max holdings limit reached. No new positions allowed.", prefix=self.prefix)
+            return pd.DataFrame()
+
+        filtered = []
+        for _, row in signals.iterrows():
+            if row["stock"] in held:
+                logger.info(f"{self.prefix}"+str(f"Already holding {row['stock']} — skipping"))
+                continue
+
+            if "confidence" in row and row["confidence"] < 0.1:
+                logger.info(f"{self.prefix}"+str(f"Low confidence {row['stock']} — skipping"))
+                continue
+
+            # Sector-level check (optional, depends on enriched signals)
+            if self.sector_limits:
+                sector = row.get("sector")
+                if sector and sector in self.sector_limits:
+                    current_sector_count = (open_pos["sector"] == sector).sum()
+                    max_sector = int(self.max_holdings * self.sector_limits[sector])
+                    if current_sector_count >= max_sector:
+                        logger.warnings(f"Sector cap reached for {sector}. Skipping {row['stock']}", prefix=self.prefix)
+                        continue
+
+            filtered.append(row)
+            if len(filtered) >= remaining_budget:
+                break
+
+        logger.success(f"{len(filtered)} signals passed allocation rules.", prefix=self.prefix)
+        return pd.DataFrame(filtered)

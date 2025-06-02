@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import yfinance as yf
 from datetime import datetime
-from core.logger import logger
+from core.logger.logger import logger
 
 # ==== Config ====
 RECOMMENDATIONS_CSV = "results/weekly_recommendations.csv"

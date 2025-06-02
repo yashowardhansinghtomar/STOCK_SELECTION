@@ -1,0 +1,19 @@
+                                                                                                  
+     OOOOOOOOO             DDDDDDDDDDDDD                IIIIIIIIII        NNNNNNNN        NNNNNNNN
+   OO:::::::::OO           D::::::::::::DDD             I::::::::I        N:::::::N       N::::::N
+ OO:::::::::::::OO         D:::::::::::::::DD           I::::::::I        N::::::::N      N::::::N
+O:::::::OOO:::::::O        DDD:::::DDDDD:::::D          II::::::II        N:::::::::N     N::::::N
+O::::::O   O::::::O          D:::::D    D:::::D           I::::I          N::::::::::N    N::::::N
+O:::::O     O:::::O          D:::::D     D:::::D          I::::I          N:::::::::::N   N::::::N
+O:::::O     O:::::O          D:::::D     D:::::D          I::::I          N:::::::N::::N  N::::::N
+O:::::O     O:::::O          D:::::D     D:::::D          I::::I          N::::::N N::::N N::::::N
+O:::::O     O:::::O          D:::::D     D:::::D          I::::I          N::::::N  N::::N:::::::N
+O:::::O     O:::::O          D:::::D     D:::::D          I::::I          N::::::N   N:::::::::::N
+O:::::O     O:::::O          D:::::D     D:::::D          I::::I          N::::::N    N::::::::::N
+O::::::O   O::::::O          D:::::D    D:::::D           I::::I          N::::::N     N:::::::::N
+O:::::::OOO:::::::O        DDD:::::DDDDD:::::D          II::::::II        N::::::N      N::::::::N
+ OO:::::::::::::OO  ...... D:::::::::::::::DD    ...... I::::::::I ...... N::::::N       N:::::::N
+   OO:::::::::OO    .::::. D::::::::::::DDD      .::::. I::::::::I .::::. N::::::N        N::::::N
+     OOOOOOOOO      ...... DDDDDDDDDDDDD         ...... IIIIIIIIII ...... NNNNNNNN         NNNNNNN
+                                                                                                  
+        Omniscient Decision Intelligence Network

@@ -1,7 +1,7 @@
 # diagnosis/clear_all_sql_tables.py
 
 from db.db_router import execute_raw_sql
-from core.logger import logger
+from core.logger.logger import logger
 
 TABLES = [
     "stock_fundamentals",
@@ -19,7 +19,7 @@ def clear_all_tables():
             execute_raw_sql(f"DELETE FROM {table}")
             logger.success(f"✅ Cleared: {table}")
         except Exception as e:
-            logger.warning(f"⚠️ Could not clear {table}: {e}")
+            logger.warnings(f"⚠️ Could not clear {table}: {e}")
 
 if __name__ == "__main__":
     clear_all_tables()

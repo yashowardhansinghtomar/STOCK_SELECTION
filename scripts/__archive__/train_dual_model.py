@@ -1,5 +1,5 @@
 from core.model_io import load_model, save_model
-from core.logger import logger
+from core.logger.logger import logger
 # train_dual_model.py
 import os
 import json
@@ -16,7 +16,7 @@ from sklearn.metrics import mean_squared_error, classification_report
 def train_dual_models():
     df = load_dataframe(PATHS["training_data"])
     if df.empty or 'total_return' not in df or 'trade_triggered' not in df:
-        logger.warning("⚠️ No valid data found.")
+        logger.warnings("⚠️ No valid data found.")
         return
 
     features = df.drop(columns=[

@@ -1,9 +1,9 @@
 import pandas as pd
 from backtesting import Strategy, Backtest
 from backtesting.lib import crossover
-from core.config import settings
-from core.data_provider import fetch_stock_data
-from core.strategy_config import StrategyConfig, ExitRule
+from core.config.config import settings
+from core.data_provider.data_provider import fetch_stock_data
+from core.config.strategy_config import StrategyConfig, ExitRule
 
 # ─────────────────────────────────────────────────────────
 # Simple pandas implementations of SMA and RSI

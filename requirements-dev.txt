@@ -1,0 +1,14 @@
+# ─── Dev / Testing / Monitoring ─────────────────────
+pytest==8.3.5
+evidently==0.7.5
+pipreqs==0.5.0
+
+# Optional: Jupyter / Notebooks (if used for dev)
+notebook
+ipython
+jupyterlab
+
+# Optional: Auto-formatting / Code Quality
+black
+flake8
+isort

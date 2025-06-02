@@ -1,7 +1,7 @@
 # scripts/seed_training_data.py
 import pandas as pd
-from core.data_provider import load_data, save_data
-from core.logger import logger
+from core.data_provider.data_provider import load_data, save_data
+from core.logger.logger import logger
 
 def seed_training_data():
     features = load_data("stock_features")

@@ -1,6 +1,6 @@
 import pandas as pd
 import vectorbt as vbt
-from core.data_provider import load_data
+from core.data_provider.data_provider import load_data
 import optuna
 from prefect import flow, task
 from prefect.server.schemas.schedules import CronSchedule

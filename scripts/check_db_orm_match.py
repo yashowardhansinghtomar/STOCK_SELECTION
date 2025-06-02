@@ -1,8 +1,8 @@
 from sqlalchemy import inspect, create_engine
 from db.models import Base
-
+import os
 # 🔧 Hardcoded correct connection string for testing
-db_url = "postgresql://postgres:0809@localhost:5432/trading_db"
+db_url = os.getenv("DATABASE_URL")
 print(db_url)
 
 engine = create_engine(db_url)

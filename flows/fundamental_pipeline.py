@@ -9,9 +9,9 @@ import yfinance as yf
 from bs4 import BeautifulSoup
 
 from prefect import flow, task, get_run_logger
-from core.logger import logger
-from core.data_provider import load_data, save_data
-from core.skiplist import is_in_skiplist, add_to_skiplist
+from core.logger.logger import logger
+from core.data_provider.data_provider import load_data, save_data
+from core.skiplist.skiplist import is_in_skiplist, add_to_skiplist
 from db.postgres_manager import run_query
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ def fetch_one(symbol_name):
     except KeyError as ke:
         # permanent no‐data → skip forever
         add_to_skiplist(symbol, str(ke))
-        log.warning(f"Skipping {symbol} permanently: {ke}")
+        log.log_warning(f"Skipping {symbol} permanently: {ke}")
         return None
     except Exception as e:
         # transient or rate-limit → let Prefect retry next run

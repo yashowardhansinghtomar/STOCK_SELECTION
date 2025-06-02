@@ -4,10 +4,11 @@ __pycache__/
 logs/
 project_data/
 *.db
+.venv/
 
 # ✅ Additions
 # Model binaries
-models/
+
 *.zip
 
 # Replay buffer and cached data

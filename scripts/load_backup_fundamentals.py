@@ -1,7 +1,7 @@
 # scripts/load_backup_fundamentals.py
 
 import pandas as pd
-from core.data_provider import save_data
+from core.data_provider.data_provider import save_data
 
 CSV_PATH = "fundamental_data.csv"  # your actual path
 TABLE_NAME = "stock_fundamentals"

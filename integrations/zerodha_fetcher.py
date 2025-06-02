@@ -1,11 +1,14 @@
+# integrations/zerodha_fetcher.py
+
 import os
 import pandas as pd
 from datetime import datetime, timedelta
 from integrations.zerodha_client import get_kite
 from db.conflict_utils import insert_with_conflict_handling
-from core.logger import logger
+from core.logger.logger import logger
 from dateutil.parser import parse
 from utils.time_utils import to_naive_utc
+from db.postgres_manager import run_query
 
 _instruments_cache = None
 
@@ -34,7 +37,7 @@ def fetch_historical_data(symbol, interval="day", start=None, end=None, days=365
     kite = get_kite()
     instrument_token = get_instrument_token(symbol)
     if not instrument_token:
-        logger.warning(f"⚠️ Instrument token not found for {symbol}. Skipping...")
+        logger.warnings(f"⚠️ Instrument token not found for {symbol}. Skipping...")
         return
 
     if isinstance(end, str): end = parse(end)
@@ -57,7 +60,7 @@ def fetch_historical_data(symbol, interval="day", start=None, end=None, days=365
         try:
             data = kite.historical_data(instrument_token, s, e, interval)
             if not data:
-                logger.warning(f"⚠️ No data for {symbol} {interval} ({s.date()} to {e.date()})")
+                logger.warnings(f"⚠️ No data for {symbol} {interval} ({s.date()} to {e.date()})")
                 continue
 
             df = pd.DataFrame(data)
@@ -70,7 +73,7 @@ def fetch_historical_data(symbol, interval="day", start=None, end=None, days=365
                 all_df.append(df)
                 logger.debug(f"📦 Chunk {idx+1}: {len(df)} rows for {symbol} [{interval}]")
             else:
-                logger.warning(f"⛔️ Skipping chunk {idx+1} – incomplete data")
+                logger.warnings(f"⛔️ Skipping chunk {idx+1} – incomplete data")
 
         except Exception as e:
             logger.error(f"❌ Failed chunk {idx+1} for {symbol}: {e}")
@@ -81,15 +84,26 @@ def fetch_historical_data(symbol, interval="day", start=None, end=None, days=365
         return final_df
 
 
-    logger.warning(f"⚠️ No usable data for {symbol} [{interval}] after batching")
+    logger.warnings(f"⚠️ No usable data for {symbol} [{interval}] after batching")
     return None
 
+
 def get_instrument_token(symbol):
-    instruments_df = pd.read_csv("data/instruments.csv")
-    instrument = instruments_df[instruments_df['tradingsymbol'] == symbol]
-    if not instrument.empty:
-        return int(instrument['instrument_token'].values[0])
+    query = f"""
+        SELECT instrument_token FROM instruments
+        WHERE tradingsymbol = '{symbol}'
+        ORDER BY last_price DESC
+        LIMIT 1;
+    """
+    result = run_query(query)
+
+    if isinstance(result, list) and result:
+        return int(result[0][0])  # ✅ Access tuple’s first item
+    elif hasattr(result, 'empty') and not result.empty:
+        return int(result['instrument_token'].iloc[0])
+
     return None
+
 
 def main():
     symbols = ["RELIANCE"]

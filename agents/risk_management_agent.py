@@ -1,29 +1,38 @@
-import pandas as pd
-from core.logger import logger
+# agents/risk_management_agent.py
+
+from core.logger.logger import logger
+from core.replay.replay_logger import log_replay_row
 
 class RiskManagementAgent:
-    def __init__(self, max_drawdown=0.1, stop_loss=0.02, take_profit=0.05):
-        self.max_drawdown = max_drawdown
-        self.stop_loss = stop_loss
-        self.take_profit = take_profit
+    def __init__(self):
+        pass  # Add init config if needed later
 
-    def apply_risk_controls(self, open_positions: pd.DataFrame):
-        updated_positions = []
-        for idx, pos in open_positions.iterrows():
-            entry_price = pos["entry_price"]
-            current_price = pos["current_price"]
+    def approve(self, signal: dict) -> bool:
+        """
+        Evaluate the signal against risk rules.
+        Returns True if trade is allowed; False otherwise.
+        """
+        # Example risk rules (add more as needed)
+        if signal.get("confidence", 0) < 0.3:
+            self._log_reject(signal, reason="low_confidence")
+            return False
 
-            pnl = (current_price - entry_price) / entry_price
-            exit_reason = None
+        if signal.get("max_drawdown", 0) > 0.25:
+            self._log_reject(signal, reason="high_drawdown")
+            return False
 
-            if pnl <= -self.stop_loss:
-                exit_reason = 'stop_loss'
-            elif pnl >= self.take_profit:
-                exit_reason = 'take_profit'
+        # Accept by default
+        return True
 
-            if exit_reason:
-                logger.info(f"🚨 Exiting {pos['stock']} due to {exit_reason}: PnL={pnl:.2%}")
-            else:
-                updated_positions.append(pos)
-
-        return pd.DataFrame(updated_positions)
+    def _log_reject(self, signal: dict, reason: str):
+        logger.info(f"⛔ Rejected {signal['stock']} due to {reason}")
+        log_replay_row(
+            stock=signal["stock"],
+            action="none",
+            reason=reason,
+            model=signal.get("model", "unknown"),
+            prediction=signal.get("predicted_return"),
+            confidence=signal.get("confidence"),
+            signal=signal.get("signal", "unknown"),
+            date=signal.get("date")
+        )

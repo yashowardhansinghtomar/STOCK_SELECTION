@@ -2,7 +2,7 @@
 
 import pandas as pd
 from db.db_router import insert_dataframe
-from core.logger import logger
+from core.logger.logger import logger
 
 # ✅ Updated seed list with required fields: de_ratio and stock_encoded
 seed_examples = [

@@ -1,5 +1,5 @@
-from core.data_provider import load_data, save_data
-from core.logger import logger
+from core.data_provider.data_provider import load_data, save_data
+from core.logger.logger import logger
 # agents/execution_agent.py
 import os
 import time
@@ -8,8 +8,8 @@ import yfinance as yf
 from datetime import datetime
 from config.paths import PATHS
 from utils.file_io import load_dataframe, save_dataframe
-from core.data_provider import load_data
-from core.logger import logger
+from core.data_provider.data_provider import load_data
+from core.logger.logger import logger
 
 
 CAPITAL_PER_TRADE = 10000
@@ -27,7 +27,7 @@ class ExecutionAgent:
         required_cols = ["stock", "entry_date", "entry_price", "sma_short", "sma_long", "rsi_thresh"]
         df = load_data("open_positions")  # SQLIFIED
         if not all(col in df.columns for col in required_cols):
-            logger.warning("⚠️ open_positions missing expected columns. Reinitializing.")
+            logger.warnings("⚠️ open_positions missing expected columns. Reinitializing.")
             return pd.DataFrame(columns=required_cols)
         return df
 

@@ -1,74 +1,70 @@
 # diagnosis/simulate_history.py
 
-import os
+import pandas as pd
+from datetime import datetime
+from core.time_context.time_context import set_simulation_date
+from core.logger.logger import logger
+from agents.planner.planner_agent_sql import PlannerAgentSQL
+from agents.planner.intraday_planner_agent import IntradayPlannerAgent
+from agents.memory.memory_agent import MemoryAgent
+from models.train_exit_model import train_exit_model
+from models.train_param_model import train_param_model
+from models.train_stock_filter_model import train_stock_filter_model
+from models.train_dual_model_sql import train_dual_model
+from models.meta_strategy_selector import train_meta_model
+import subprocess
 import argparse
-from datetime import datetime, timedelta
-from agents.planner_agent_sql import PlannerAgentSQL
-from core.time_context import set_simulation_date
-from core.logger import logger  # existing logger
-import logging
 
-# Setup file logger specifically for simulate_history
-log_dir = "logs/history_simulation"
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, f"simulate_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
 
-file_handler = logging.FileHandler(log_file, encoding="utf-8")
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+def daterange(start, end, step_days=1):
+    cur = pd.to_datetime(start)
+    end = pd.to_datetime(end)
+    while cur <= end:
+        yield cur
+        cur += pd.Timedelta(days=step_days)
 
-logger.addHandler(file_handler)
-logger.info(f"📂 Writing simulate_history logs to {log_file}")
 
-def daterange(start_date, end_date):
-    """Yield one date per week between start and end."""
-    current = start_date
-    while current <= end_date:
-        yield current
-        current += timedelta(days=7)
+def simulate_and_bootstrap(start="2024-01-01", end="2025-04-01", weekly_only=False):
+    logger.start("Starting full backfilled simulation...")
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run historical simulation.")
-    parser.add_argument("--start", required=True, help="Start date in YYYY-MM-DD format")
-    parser.add_argument("--end", required=True, help="End date in YYYY-MM-DD format")
-    parser.add_argument("--stock", required=False, help="(Optional) Only simulate this stock")
-    return parser.parse_args()
+    for date in daterange(start, end):
+        logger.info(f"🧭 Simulating date: {date.date()}...")
+        set_simulation_date(date)
 
-def main():
-    args = parse_args()
+        if not weekly_only:
+            IntradayPlannerAgent(dry_run=False).run()
 
-    start_date = datetime.strptime(args.start, "%Y-%m-%d").date()
-    end_date = datetime.strptime(args.end, "%Y-%m-%d").date()
+        if date.weekday() == 0 or weekly_only:  # Monday
+            PlannerAgentSQL(dry_run=False).run()
 
-    stock_list = [args.stock.upper()] if args.stock else None
+    logger.start("Simulation complete. Starting model training...")
 
-    print(f"\n🕰️ Starting historical simulation from {start_date} to {end_date}")
-    if stock_list:
-        print(f"🎯 Focusing on single stock: {stock_list[0]}")
-    else:
-        print("🎯 Evaluating full ML-selected stock universe.")
+    # === Train all ML models ===
+    train_exit_model()
+    train_param_model()
+    train_stock_filter_model()
+    train_dual_model()
+    train_meta_model()
 
-    for current_start in daterange(start_date, end_date):
-        sim_date = current_start
-        os.environ["SIMULATED_DATE"] = sim_date.strftime("%Y-%m-%d")
+    logger.success("ML model training complete. Starting RL training...")
 
-        print(f"\n📆 Simulating week starting {sim_date}...")
+    try:
+        subprocess.run(["python", "rl/train_rl_agent.py", "--freq", "day", "--steps", "1000000"])
+        subprocess.run(["python", "rl/train_rl_intraday.py"])
+    except Exception as e:
+        logger.warnings(f"RL training failed: {e}")
 
-        try:
-            agent = PlannerAgentSQL(
-                force_fetch=False,
-                force_enrich=False,
-                force_filter=False,
-                force_eval=False,
-                dry_run=False,
-                stock_whitelist=stock_list,
-            )
-            agent.run_weekly_routine()
+    logger.success("All models trained. O.D.I.N. is now live-ready.")
+    logger.start("Updating Memory Agent (final cleanup and summary)...")
 
-        except Exception as e:
-            print(f"❌ Simulation failed for {sim_date}: {e}")
+    MemoryAgent().update()
 
-    print("\n🏁 Historical simulation complete.")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--start", type=str, default="2024-01-01")
+    parser.add_argument("--end", type=str, default="2025-04-01")
+    parser.add_argument("--weekly-only", action="store_true")
+    args = parser.parse_args()
+
+    simulate_and_bootstrap(start=args.start, end=args.end, weekly_only=args.weekly_only)

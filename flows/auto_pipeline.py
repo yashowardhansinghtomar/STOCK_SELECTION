@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from prefect import flow, task, get_run_logger
 from prefect.server.schemas.schedules import IntervalSchedule
 
-from core.config import settings
+from core.config.config import settings
 from db.db import get_session  # SQLAlchemy session factory
 from sqlalchemy import text
 
@@ -27,10 +27,10 @@ def update_last_date(session, new_date):
 
 @task(retries=3, retry_delay_seconds=60)
 def ingest_data(run_date: date):
-    from core.data_provider import fetch_stock_data, save_data
+    from core.data_provider.data_provider import fetch_stock_data, save_data
     logger = get_run_logger()
     # assume fundamentals pre‐loaded
-    from core.data_provider import load_data
+    from core.data_provider.data_provider import load_data
     fundamentals = load_data(settings.fundamentals_table)
     for stock in fundamentals["stock"].unique():
         # fetch exactly one day of data
@@ -48,15 +48,15 @@ def enrich(fundamentals, run_date: date):
 
 @task
 def run_filter(run_date: date):
-    from models.stock_filter_predictor import run_stock_filter
+    from models.run_stock_filter import run_stock_filter
     run_stock_filter(as_of=run_date)
-    from core.data_provider import load_data
+    from core.data_provider.data_provider import load_data
     return load_data(settings.selected_table)
 
 @task
 def backtest_and_label(selected, run_date: date):
     from core.backtest_bt import run_backtest
-    from services.feedback_loop import update_training_data
+    from agents.memory.feedback_loop import update_training_data
     logger = get_run_logger()
     for rec in selected.to_dict(orient="records"):
         run_backtest(**rec, run_date=run_date)
@@ -66,7 +66,7 @@ def backtest_and_label(selected, run_date: date):
 
 @task
 def check_drift_and_trigger(run_date: date):
-    from agents.memory_agent import MemoryAgent
+    from agents.memory.memory_agent import MemoryAgent
     ma = MemoryAgent()
     ma.check_retraining_needed(as_of=run_date)
 

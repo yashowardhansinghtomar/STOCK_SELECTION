@@ -4,11 +4,11 @@ import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
-from core.logger import logger
+from core.logger.logger import logger
 from core.model_io import save_model
-from core.data_provider import load_data, save_data
-from core.feature_enricher_multi import enrich_multi_interval_features
-from core.config import settings, get_feature_columns
+from core.data_provider.data_provider import load_data, save_data
+from core.feature_engineering.feature_enricher_multi import enrich_multi_interval_features
+from core.config.config import settings, get_feature_columns
 
 
 def train_meta_model():
@@ -22,11 +22,15 @@ def train_meta_model():
     rows = []
     for _, row in df_base.iterrows():
         stock = row["stock"]
-        date = pd.to_datetime(row["date"])
-        enriched = enrich_multi_interval_features(stock, date)
+        date = pd.to_datetime(row["date"], errors="coerce")
+        interval = row.get("interval", "day")
+        if pd.isna(date):
+            continue
+        enriched = enrich_multi_interval_features(stock, date, intervals=[interval])
         if enriched.empty:
             continue
         enriched["target"] = row["target"]
+        enriched["interval"] = interval
         rows.append(enriched)
 
     if not rows:
@@ -36,7 +40,7 @@ def train_meta_model():
     df = pd.concat(rows, ignore_index=True)
     df = df.dropna(subset=["target"])
 
-    X = df[get_feature_columns()]  # unified feature list
+    X = df[get_feature_columns()].copy().fillna(0).replace([float("inf"), float("-inf")], 0)
     y = df["target"]
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -47,6 +51,7 @@ def train_meta_model():
 
     model = RandomForestRegressor(
         n_estimators=settings.meta_n_estimators,
+        max_depth=settings.meta_max_depth,
         random_state=settings.random_state,
         n_jobs=settings.meta_n_jobs
     )

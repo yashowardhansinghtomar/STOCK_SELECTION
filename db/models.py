@@ -1,10 +1,11 @@
 # db/models.py
 
 from datetime import datetime, date
-from sqlalchemy import Column, String, Date, DateTime, Float, Integer, BigInteger, Boolean
+from sqlalchemy import Column, String, Date, DateTime, Float, Integer, BigInteger, Boolean, TIMESTAMP
 from sqlalchemy.orm import declarative_base
-from core.config import settings
-
+from core.config.config import settings
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON
 Base = declarative_base()
 
 class Instrument(Base):
@@ -41,8 +42,38 @@ class StockPriceHistory(Base):
     interval    = Column(String, default="day")
 
 
+class JointPolicyPrediction(Base):
+    __tablename__ = "joint_policy_predictions"
+
+    date = Column(Date, primary_key=True)
+    stock = Column(String(20), primary_key=True)
+    enter_prob = Column(Float)
+    position_size = Column(Float)
+    exit_days = Column(Integer)
+    strategy_config = Column(JSON)
+    confidence = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class StockFeatureDay(Base):
     __tablename__ = 'stock_features_day'
+    stock             = Column(String(20), primary_key=True)
+    date              = Column(Date, primary_key=True)
+    sma_short         = Column(Float)
+    sma_long          = Column(Float)
+    rsi_thresh        = Column(Float)
+    macd              = Column(Float)
+    vwap              = Column(Float)
+    atr_14            = Column(Float)
+    bb_width          = Column(Float)
+    macd_histogram    = Column(Float)
+    price_compression = Column(Float)
+    stock_encoded     = Column(Integer)
+    volatility_10     = Column(Float)
+    volume_spike      = Column(Boolean)
+    vwap_dev          = Column(Float)
+
+class StockFeature1m(Base):
+    __tablename__ = 'stock_features_1m'
     stock             = Column(String(20), primary_key=True)
     date              = Column(Date, primary_key=True)
     sma_short         = Column(Float)
@@ -199,6 +230,29 @@ class PriceModelPrediction(Base):
     confidence        = Column(Float)
     created_at        = Column(DateTime, default=datetime.utcnow)
 
+class TrainingData(Base):
+    __tablename__ = "training_data"
+
+    stock = Column(String(20), primary_key=True)
+    entry_date = Column(Date, primary_key=True)
+    features = Column(JSONB)
+    label = Column(Float)
+    run_timestamp = Column(TIMESTAMP)
+
+class SystemLog(Base):
+    __tablename__ = "system_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)  # ✅ Add this
+    simulation_date = Column(Date)
+    timestamp = Column(DateTime)
+    agent = Column(String(50))
+    module = Column(String(50))
+    action = Column(String(100))
+    result = Column(String(100))
+    meta = Column(JSONB)
+
+
+
 class MLSelectedStock(Base):
     __tablename__ = settings.ml_selected_stocks_table
 
@@ -208,4 +262,4 @@ class MLSelectedStock(Base):
     imported_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
-        return f"<MLSelectedStock(stock={self.stock!r}, source={self.source!r}, imported_at={self.imported_at!r})>"
+        return f"<MLSelectedStock(id={self.id!r}, stock={self.stock!r}, source={self.source!r}, imported_at={self.imported_at!r})>"

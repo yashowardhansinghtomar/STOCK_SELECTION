@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-from core.data_provider import load_data
-from core.logger import logger
+from core.data_provider.data_provider import load_data
+from core.logger.logger import logger
 
 # --- Config ---
 CURVE_TABLE = "predicted_curves"
@@ -72,7 +72,7 @@ def evaluate_model(stock=STOCK):
         })
 
     if not results:
-        logger.warning("⚠️ No evaluatable predictions.")
+        logger.warnings("⚠️ No evaluatable predictions.")
         return
 
     result_df = pd.DataFrame(results)

@@ -9,7 +9,7 @@ runs and that any plot or file artefacts are produced.
 import os
 import pandas as pd
 from analysis import model_health
-from core import data_provider
+from core.data import data_provider
 
 import pytest
 

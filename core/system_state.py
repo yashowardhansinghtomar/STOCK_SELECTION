@@ -2,12 +2,12 @@
 
 import pandas as pd
 import json
-from core.logger import logger
+from core.logger.logger import logger
 from core.model_io import load_model
-from core.config import settings
-from core.data_provider import load_data
+from core.config.config import settings
+from core.data_provider.data_provider import load_data
 from datetime import datetime
-from core.time_context import get_simulation_date
+from core.time_context.time_context import get_simulation_date
 
 
 def get_market_data_state():
@@ -25,7 +25,7 @@ def get_market_data_state():
 
 def get_feature_state():
     status = {}
-    for interval in ["day", "15m", "60m"]:
+    for interval in ["day", "15minute", "60minute"]:
         table = settings.interval_feature_table_map.get(interval, f"stock_features_{interval}")
         df = load_data(table)
         if df is None or df.empty:
@@ -85,6 +85,30 @@ def build_system_state():
         "execution": get_execution_state(),
     }
     return state
+
+
+# --- Configuration persistence for policy mode & allocation --- #
+
+CONFIG_FILE = "config/system_config.json"
+
+def get_system_config() -> dict:
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning(f"[SYSTEM CONFIG] Failed to load config: {e}")
+        return {}
+
+def update_system_config(new_config: dict):
+    config = get_system_config()
+    config.update(new_config)
+    try:
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(config, f, indent=2)
+        logger.info("[SYSTEM CONFIG] Config updated.")
+    except Exception as e:
+        logger.warning(f"[SYSTEM CONFIG] Failed to update config: {e}")
+
 
 
 if __name__ == "__main__":

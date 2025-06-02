@@ -2,7 +2,7 @@ import sys
 import json
 import pandas as pd
 from pathlib import Path
-from core import data_provider
+from core.data import data_provider
 from analysis.data_audit import main as audit_main
 
 def test_data_audit_threshold_behavior(monkeypatch, tmp_path):
