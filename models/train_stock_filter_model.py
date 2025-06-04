@@ -3,8 +3,11 @@
 import pandas as pd
 import lightgbm as lgb
 import joblib
+import random
+from datetime import timedelta
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
+
 from core.data_provider.data_provider import load_data, save_data
 from db.postgres_manager import run_query
 from core.logger.logger import logger
@@ -14,33 +17,37 @@ RECS_TABLE = "recommendations"
 PRED_TABLE = "filter_model_predictions"
 MODEL_PATH = "models/filter_model.lgb"
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Config
-# ────────────────────────────────────────────────────────────────────────────────
 FEATURE_COLS = [
     "sma_short", "sma_long", "rsi_thresh", "macd", "vwap", "atr_14",
     "bb_width", "macd_histogram", "price_compression", "volatility_10",
     "volume_spike", "vwap_dev", "stock_encoded"
 ]
-
 LABEL_COL = "label"
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Main
-# ────────────────────────────────────────────────────────────────────────────────
+
 def train_filter_model():
     recs = load_data(RECS_TABLE)
-    feats = load_data(FEATURE_TABLE)
 
+    # 🔁 Bootstrap with fallback dummy data if needed
     if recs.empty:
-        logger.warning("No past recommendations yet — skipping filter training for now.")
-        return
+        logger.warning("💡 No recommendations yet — inserting dummy trades for bootstrap.")
+        dummy_stocks = ["RELIANCE", "SBIN", "INFY", "LT", "ICICIBANK"]
+        dummy_dates = pd.date_range("2023-01-01", periods=25, freq="D")
+        dummy = pd.DataFrame({
+            "stock": [s for s in dummy_stocks for _ in range(5)],
+            "date": list(dummy_dates)[:25],
+            "label": [random.choice([0, 1]) for _ in range(25)],
+        })
+        save_data(dummy, RECS_TABLE)
+        recs = dummy
+
+    feats = load_data(FEATURE_TABLE)
     if feats.empty:
         logger.warning("Feature data is missing. Aborting training.")
         return
 
     # Join and filter
-    merged = recs.merge(feats, left_on=["stock", "date"], right_on=["stock", "date"])
+    merged = recs.merge(feats, on=["stock", "date"])
     merged = merged.dropna(subset=FEATURE_COLS + [LABEL_COL])
     logger.info(f"Training on {len(merged)} rows.")
 
@@ -63,7 +70,7 @@ def train_filter_model():
     logger.info("\n" + classification_report(y_val, y_pred))
     logger.info(f"ROC AUC: {roc_auc_score(y_val, y_proba):.3f}")
 
-    # Save predictions for evaluation/debugging (optional)
+    # Save predictions
     X_val = X_val.copy()
     X_val["score"] = y_proba
     X_val["rank"] = X_val["score"].rank(pct=True)
@@ -73,10 +80,9 @@ def train_filter_model():
     X_val["date"] = merged.iloc[X_val.index]["date"].values
 
     save_data(X_val[["date", "stock", "score", "rank", "confidence", "decision"]], PRED_TABLE, if_exists="replace")
-
-    # Save the trained model to disk
     joblib.dump(model, MODEL_PATH)
-    logger.success("Filter model trained and saved. Predictions written to DB.")
+    logger.success("✅ Filter model trained and saved. Predictions written to DB.")
+
 
 if __name__ == "__main__":
     train_filter_model()

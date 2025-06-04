@@ -2,9 +2,9 @@
 
 from datetime import datetime
 import pandas as pd
-from core.filter_model.run_filter import run_filter_model
-from core.utils.market_conditions import get_volatility_regime
-from core.phase_controller import PhaseController
+from models.run_stock_filter import run_stock_filter
+from core.market_conditions import get_volatility_regime
+from bootstrap.phase_controller import PhaseController
 from core.logger.logger import logger
 from agents.execution.execution_agent_sql import ExecutionAgentSQL
 
@@ -18,7 +18,7 @@ def run_bootstrap_trader(today=None):
     exec_agent = ExecutionAgentSQL(session=session, dry_run=False)
 
     # STEP 1: Select stocks
-    filtered_stocks = run_filter_model(today)
+    filtered_stocks = run_stock_filter(today)
 
     # STEP 2: Generate trades (ε-greedy)
     trades = phase_controller.generate_trades(filtered_stocks, today)

@@ -190,22 +190,33 @@ def load_data(table_name: str, interval: str = None) -> pd.DataFrame:
     finally:
         session.close()
 
-def get_last_close(symbol: str) -> Optional[float]:
-    session = SessionLocal()
+def get_last_close(symbol: str, sim_date: datetime = None) -> Optional[float]:
     try:
-        Model = ORM_MODEL_MAP[settings.price_history_table]
-        rec = (
-            session.query(Model)
-            .filter(Model.symbol == symbol)
-            .order_by(Model.date.desc())
-            .first()
-        )
-        return float(rec.close) if rec else None
+        sim_date = pd.to_datetime(sim_date or datetime.now().date()).normalize()
+        logger.debug(f"🧪 get_last_close: {symbol} as of {sim_date}")
+
+        df = fetch_stock_data(symbol, end=sim_date, days=5, interval="day")
+
+        if df is not None and not df.empty:
+            df.index = pd.to_datetime(df.index).normalize()
+            df = df[df.index <= sim_date]
+
+            if df.empty:
+                logger.warning(f"⚠️ {symbol}: No price data available on or before {sim_date.date()}")
+                return None
+
+            price = float(df["close"].iloc[-1])
+            logger.debug(f"📊 {symbol}: Returning close {price} for {df.index[-1].date()}")
+            return price
+
+        logger.warning(f"⚠️ No data returned for {symbol} as of {sim_date.date()}")
+        return None
     except Exception as e:
         logger.error(f"get_last_close('{symbol}') failed: {e}")
         return None
-    finally:
-        session.close()
+
+
+
 
 def delete_cached_features(stock: str, sim_date: datetime, interval: str = "day") -> None:
     session = SessionLocal()

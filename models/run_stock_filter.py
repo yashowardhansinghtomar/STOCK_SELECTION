@@ -1,5 +1,6 @@
 # models/run_stock_filter.py
 
+import os
 import pandas as pd
 import lightgbm as lgb
 import joblib
@@ -7,10 +8,11 @@ from datetime import datetime
 from core.data_provider.data_provider import load_data, save_data
 from db.postgres_manager import run_query
 from core.logger.logger import logger
+from core.config.config import settings
 
 FEATURE_TABLE = "stock_features_day"
 PREDICTION_TABLE = "filter_model_predictions"
-MODEL_PATH = "models/filter_model.lgb"
+MODEL_PATH = os.path.join("models", "filter_model.lgb")
 
 FEATURE_COLS = [
     "sma_short", "sma_long", "rsi_thresh", "macd", "vwap", "atr_14",
@@ -18,26 +20,26 @@ FEATURE_COLS = [
     "volume_spike", "vwap_dev", "stock_encoded"
 ]
 
-
 def run_stock_filter(as_of: datetime = None):
     as_of = as_of or datetime.today()
     date_str = as_of.strftime("%Y-%m-%d")
-    
-    features = load_data(FEATURE_TABLE)
-    if features.empty:
-        logger.warning("No features available for prediction.")
-        return
 
-    features = features[features["date"] == date_str].dropna(subset=FEATURE_COLS)
-    if features.empty:
-        logger.warning(f"No features found for {date_str}.")
-        return
+    try:
+        features = load_data(FEATURE_TABLE)
+        features = features[features["date"] == date_str].dropna(subset=FEATURE_COLS)
+        if features.empty:
+            raise ValueError(f"No valid features found for {date_str}")
+    except Exception as e:
+        logger.warning(f"Feature load failed: {e}")
+        return settings.fallback_stocks or []
 
     try:
         model = joblib.load(MODEL_PATH)
     except Exception as e:
-        logger.error(f"Model load failed: {e}")
-        return
+        logger.error(f"⚠️ Model load failed: {e} — falling back to fallback stocks.")
+        logger.warning(f"Using fallback stock list: {settings.fallback_stocks}")
+
+        return settings.fallback_stocks or []
 
     X = features[FEATURE_COLS]
     probs = model.predict_proba(X)[:, 1]
@@ -48,9 +50,18 @@ def run_stock_filter(as_of: datetime = None):
     results["confidence"] = results["score"]
     results["decision"] = (results["score"] > 0.5).map({True: "buy", False: "reject"})
 
-    save_data(results, PREDICTION_TABLE, if_exists="replace")
-    logger.success(f"Stock filter run for {date_str}. Predictions saved.")
+    try:
+        save_data(results, PREDICTION_TABLE, if_exists="replace")
+        logger.success(f"✅ Stock filter run for {date_str}. Predictions saved.")
+    except Exception as e:
+        logger.warning(f"❌ Could not save filter predictions: {e}")
 
+    selected = results[results["decision"] == "buy"]["stock"].tolist()
+    if not selected:
+        logger.warning("⚠️ No stocks selected by filter model — falling back.")
+        return settings.fallback_stocks or []
+
+    return selected
 
 if __name__ == "__main__":
-    run_stock_filter()
+    print(run_stock_filter())

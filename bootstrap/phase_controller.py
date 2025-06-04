@@ -1,5 +1,5 @@
 # phase_controller.py
-
+from core.market_conditions import get_volatility_regime
 from bootstrap.trade_generator import (
     generate_random_trades,
     generate_rule_based_trades,

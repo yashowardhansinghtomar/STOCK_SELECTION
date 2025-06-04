@@ -54,8 +54,9 @@ class Settings(BaseSettings):
     rl_allocation: int = 10        # percent
 
     # ─── ML Model Settings ─────────────────────────────────────────────    
-    fallback_stocks: List[str] = Field(default_factory=list)
-
+    fallback_stocks: List[str] = Field(default_factory=lambda: [
+        "RELIANCE", "ICICIBANK", "SBIN", "INFY", "LT"
+    ])
 
     # ─── time series Agent switch ───────────────────────────────────────────────────
     ts_enabled: bool = True

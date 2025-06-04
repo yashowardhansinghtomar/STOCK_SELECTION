@@ -3,6 +3,8 @@
 from collections import defaultdict
 from statistics import mean
 
+REAL_SOURCES = {"guided", "autonomous", "real"}  # all acceptable source tags
+
 class ReplayBuffer:
     def __init__(self, tag="bootstrap"):
         self.data = []
@@ -49,6 +51,7 @@ class ReplayBuffer:
     def count_trades(self, regime):
         return len([t for t in self.data if t["tags"].get("vol_regime") == regime])
 
+
     def count_real_trades(self):
-        """Returns number of real trades in the buffer."""
-        return sum(1 for r in self.data if r.get("source") == "real")
+        return len([t for t in self.data if t["tags"].get("source") in REAL_SOURCES])
+

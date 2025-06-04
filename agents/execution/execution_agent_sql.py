@@ -136,7 +136,7 @@ class ExecutionAgentSQL:
 
     def enter_trades(self, signals: pd.DataFrame, open_positions: pd.DataFrame):
         # Cap RL trades to allocation limit
-        rl_alloc = settings.rl_allocation or 10  # fallback to 10% if not in config
+        rl_alloc = settings.rl_allocation or 10
         max_rl_trades = int(len(signals) * rl_alloc / 100)
 
         if "source" not in signals.columns:
@@ -153,23 +153,28 @@ class ExecutionAgentSQL:
 
         new_positions, entry_logs, param_preds, filter_preds = [], [], [], []
         seen = set(open_positions["stock"].tolist())
+
         for _, sig in signals.iterrows():
             sym = sig["symbol"]
             if sym in seen:
                 logger.info(f"{self.prefix}Already in position: {sym}")
                 continue
+
             ohlc = self.load_today_ohlc(sym)
             if not ohlc:
                 logger.warnings(f"Skipping {sym}: OHLC missing.", prefix=self.prefix)
                 continue
+
             _, _, _, close = ohlc
             if close <= 0:
                 logger.warnings(f"Non-positive price for {sym}: {close}", prefix=self.prefix)
                 continue
+
             qty = int(CAPITAL_PER_TRADE / close)
             if qty < 1:
                 logger.warnings(f"Qty < 1 for {sym} @ {close}.", prefix=self.prefix)
                 continue
+
             interval = sig.get("interval", "day")
             strategy_cfg = sig.get("strategy_config", {})
             if isinstance(strategy_cfg, str):
@@ -179,6 +184,7 @@ class ExecutionAgentSQL:
                     strategy_cfg = {}
 
             logger.success(f"Entering {sym} @ ₹{close:.2f}", prefix=self.prefix)
+
             publish_event("TRADE_OPEN", {
                 "symbol": sym,
                 "qty": qty,
@@ -187,6 +193,7 @@ class ExecutionAgentSQL:
                 "strategy_config": strategy_cfg,
                 "timestamp": self.now_str
             })
+
             new_positions.append({
                 "stock": sym,
                 "entry_price": close,
@@ -194,6 +201,7 @@ class ExecutionAgentSQL:
                 "strategy_config": strategy_cfg,
                 "interval": interval
             })
+
             entry_logs.append({
                 "timestamp": self.now_str,
                 "stock": sym,
@@ -205,6 +213,7 @@ class ExecutionAgentSQL:
                 "imported_at": self.now_str,
                 "interval": interval
             })
+
             param_preds.append({
                 "date": self.today.date(),
                 "stock": sym,
@@ -215,6 +224,7 @@ class ExecutionAgentSQL:
                 "expected_sharpe": sig.get("sharpe"),
                 "created_at": self.today
             })
+
             if pd.notna(sig.get("confidence")):
                 filter_preds.append({
                     "date": self.today.date(),
@@ -225,8 +235,8 @@ class ExecutionAgentSQL:
                     "decision": "buy",
                     "created_at": self.today
                 })
+
             try:
-                # Create a minimal Trade object — for now just mocked; we can enrich this
                 from bootstrap.trade_generator import Trade
                 trade_obj = Trade(
                     symbol=sym,
@@ -239,6 +249,7 @@ class ExecutionAgentSQL:
                     exit_strategy="TIME_BASED",
                     meta={"exploration_type": sig.get("source", "unknown")}
                 )
+
                 result = self.executor.execute(
                     symbol=sym,
                     price=close,
@@ -247,20 +258,47 @@ class ExecutionAgentSQL:
                     interval=interval,
                     trade_obj=trade_obj
                 )
+
                 if result:
                     self.executor.log_to_replay(result, strategy_cfg, interval)
-            except Exception as e:
-                logger.warnings(f"Execution or replay log failed for {sym}: {e}", prefix=self.prefix)
 
+                    # ✅ Also log to SQL replay buffer
+                    try:
+                        insert_replay_episode({
+                            "stock": sym,
+                            "date": self.today,
+                            "interval": interval,
+                            "action": "buy",
+                            "reward": None,
+                            "features": {
+                                "sma_short": sig.get("sma_short", 0),
+                                "sma_long": sig.get("sma_long", 0),
+                                "rsi_thresh": sig.get("rsi_thresh", 0),
+                                "confidence": sig.get("confidence", 0.0),
+                                "sharpe": sig.get("sharpe", 0.0),
+                                "rank": sig.get("rank", 0),
+                            },
+                            "strategy_config": strategy_cfg,
+                        })
+                    except Exception as e:
+                        logger.warning(f"{self.prefix} Replay SQL insert failed for {sym}: {e}")
+
+            except Exception as e:
+                logger.warnings(f"{self.prefix}Execution or replay log failed for {sym}: {e}")
 
         if entry_logs and not self.dry_run:
             insert_with_conflict_handling(pd.DataFrame(entry_logs), TABLE_TRADES)
+
         if param_preds and not self.dry_run:
-            df = pd.DataFrame(param_preds).copy().fillna({"sma_short": 0, "sma_long": 0, "rsi_thresh": 0, "confidence": 0.0, "expected_sharpe": 0.0})
+            df = pd.DataFrame(param_preds).copy().fillna({
+                "sma_short": 0, "sma_long": 0, "rsi_thresh": 0,
+                "confidence": 0.0, "expected_sharpe": 0.0
+            })
             df["sma_short"] = df["sma_short"].astype(int)
             df["sma_long"] = df["sma_long"].astype(int)
             df["rsi_thresh"] = df["rsi_thresh"].astype(int)
             insert_with_conflict_handling(df, TABLE_PARAM_PRED)
+
         if filter_preds and not self.dry_run:
             insert_with_conflict_handling(pd.DataFrame(filter_preds), TABLE_FILTER_PRED)
 

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 import random
-from rl.replay_buffer import ReplayBuffer
+from bootstrap.replay_buffer import ReplayBuffer
 from core.filtering.run_filter import run_filter_model
 from bootstrap.simulate_trade_execution import simulate_trade_execution
 from core.model_trainer.trainer import train_models

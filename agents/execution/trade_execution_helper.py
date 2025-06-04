@@ -1,6 +1,6 @@
 # core/execution/trade_execution_helper.py
 from core.broker_api import submit_order_live
-from simulate_trade_execution import simulate_trade_execution
+from bootstrap.simulate_trade_execution import simulate_trade_execution
 from db.replay_buffer_sql import insert_replay_episode
 
 class TradeExecutionHelper:
