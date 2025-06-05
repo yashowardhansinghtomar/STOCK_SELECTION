@@ -172,6 +172,7 @@ class Recommendation(Base):
     trade_count       = Column(Integer)
     trade_triggered   = Column(Integer)
     interval          = Column(String, default="day")
+    label             = Column(Integer, nullable=True)
 
 class OpenPosition(Base):
     __tablename__ = 'open_positions'

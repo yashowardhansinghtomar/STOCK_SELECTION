@@ -51,7 +51,7 @@ def run_filter(run_date: date):
     from models.run_stock_filter import run_stock_filter
     run_stock_filter(as_of=run_date)
     from core.data_provider.data_provider import load_data
-    return load_data(settings.selected_table)
+    return load_data(settings.ml_selected_stocks_table)
 
 @task
 def backtest_and_label(selected, run_date: date):

@@ -169,7 +169,7 @@ class PlannerAgentSQL:
             logger.error(f"{self.prefix}"+str(f"❌ Features outdated (max: {max_feat.date()} < expected: {expected.date()}); aborting."))
             return
 
-        selected = load_data(settings.selected_table)
+        selected = load_data(settings.ml_selected_stocks_table)
         needs_filter = (
             self.force_filter
             or selected is None
@@ -192,7 +192,7 @@ class PlannerAgentSQL:
         from models.joint_policy import JointPolicyModel
         model = JointPolicyModel.load()
 
-        df_filtered = load_data(settings.selected_table)
+        df_filtered = load_data(settings.ml_selected_stocks_table)
         if df_filtered is None or df_filtered.empty:
             logger.warnings("⚠️ No ML-selected stocks. Using fallback.", prefix=self.prefix)
             stocks = settings.fallback_stocks

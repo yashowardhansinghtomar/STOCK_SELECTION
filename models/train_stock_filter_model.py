@@ -4,18 +4,18 @@ import pandas as pd
 import lightgbm as lgb
 import joblib
 import random
-from datetime import timedelta
+from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
 
+from core.config.config import settings
 from core.data_provider.data_provider import load_data, save_data
-from db.postgres_manager import run_query
 from core.logger.logger import logger
+from pathlib import Path
 
 FEATURE_TABLE = "stock_features_day"
 RECS_TABLE = "recommendations"
 PRED_TABLE = "filter_model_predictions"
-MODEL_PATH = "models/filter_model.lgb"
 
 FEATURE_COLS = [
     "sma_short", "sma_long", "rsi_thresh", "macd", "vwap", "atr_14",
@@ -25,40 +25,95 @@ FEATURE_COLS = [
 LABEL_COL = "label"
 
 
-def train_filter_model():
+def save_model_and_predictions(model, X_val, y_proba, merged):
+    preds = X_val.copy()
+    preds["score"] = y_proba
+    preds["rank"] = preds["score"].rank(pct=True)
+    preds["confidence"] = preds["score"]
+    preds["decision"] = preds["score"].gt(0.5).map({True: "buy", False: "reject"})
+    preds["stock"] = merged.iloc[preds.index]["stock"].values
+    preds["date"] = merged.iloc[preds.index]["date"].values
+
+    save_data(preds[["date", "stock", "score", "rank", "confidence", "decision"]],
+              PRED_TABLE, if_exists="replace")
+
+    model_path = Path(settings.model_dir) / f"{settings.model_names['filter']}.lgb"
+    joblib.dump(model, model_path)
+    logger.success("✅ Filter model trained and saved. Predictions written to DB.")
+
+
+def train_filter_model(force_dummy=False):
     recs = load_data(RECS_TABLE)
-
-    # 🔁 Bootstrap with fallback dummy data if needed
-    if recs.empty:
-        logger.warning("💡 No recommendations yet — inserting dummy trades for bootstrap.")
-        dummy_stocks = ["RELIANCE", "SBIN", "INFY", "LT", "ICICIBANK"]
-        dummy_dates = pd.date_range("2023-01-01", periods=25, freq="D")
-        dummy = pd.DataFrame({
-            "stock": [s for s in dummy_stocks for _ in range(5)],
-            "date": list(dummy_dates)[:25],
-            "label": [random.choice([0, 1]) for _ in range(25)],
-        })
-        save_data(dummy, RECS_TABLE)
-        recs = dummy
-
     feats = load_data(FEATURE_TABLE)
-    if feats.empty:
-        logger.warning("Feature data is missing. Aborting training.")
+
+    if recs.empty or force_dummy:
+        logger.warning("💡 No recommendations found — generating dummy data for bootstrap.")
+
+        if feats.empty:
+            logger.warning("❌ Feature data is missing. Cannot proceed.")
+            return
+
+        valid_dates = feats["date"].drop_duplicates().sort_values().head(5).tolist()
+        valid_stocks = feats["stock"].drop_duplicates().tolist()
+        dummy_stocks = [s for s in ["RELIANCE", "SBIN", "INFY", "LT", "ICICIBANK"] if s in valid_stocks]
+
+        if not dummy_stocks or not valid_dates:
+            logger.warning("⚠️ No valid dummy stocks or dates available.")
+            return
+
+        dummy_recs = pd.DataFrame([
+            {"stock": stock, "date": date, "label": random.choice([0, 1])}
+            for stock in dummy_stocks for date in valid_dates
+        ])
+
+        dummy_feats = pd.DataFrame([
+            {
+                "stock": stock,
+                "date": date,
+                "sma_short": random.randint(5, 15),
+                "sma_long": random.randint(20, 50),
+                "rsi_thresh": random.randint(30, 70),
+                "macd": random.uniform(-1, 1),
+                "vwap": random.uniform(100, 500),
+                "atr_14": random.uniform(1, 5),
+                "bb_width": random.uniform(0.5, 2),
+                "macd_histogram": random.uniform(-0.5, 0.5),
+                "price_compression": random.uniform(0, 1),
+                "volatility_10": random.uniform(0.1, 2),
+                "volume_spike": random.uniform(0.5, 3),
+                "vwap_dev": random.uniform(-2, 2),
+                "stock_encoded": hash(stock) % 1000,
+            }
+            for stock in dummy_stocks for date in valid_dates
+        ])
+
+        save_data(dummy_recs, RECS_TABLE)
+        save_data(dummy_feats, FEATURE_TABLE)
+        recs = dummy_recs
+        feats = dummy_feats
+        logger.info(f"✅ Inserted {len(dummy_recs)} dummy recs and {len(dummy_feats)} dummy features.")
+
+    merged = recs.merge(feats, on=["stock", "date"])
+    logger.info(f"🔍 Loaded {len(merged)} merged rows for training")
+
+    missing_cols = [col for col in FEATURE_COLS + [LABEL_COL] if col not in merged.columns]
+    if missing_cols:
+        logger.error(f"❌ Missing required columns in merged data: {missing_cols}")
         return
 
-    # Join and filter
-    merged = recs.merge(feats, on=["stock", "date"])
     merged = merged.dropna(subset=FEATURE_COLS + [LABEL_COL])
-    logger.info(f"Training on {len(merged)} rows.")
+    logger.info(f"📈 Training on {len(merged)} merged records after dropping NA.")
 
     if len(merged) < 100:
-        logger.warning("Not enough labeled data to train a robust model. Aborting.")
+        logger.warning("⚠️ Not enough labeled data to train a robust model. Skipping model training.")
         return
 
     X = merged[FEATURE_COLS]
     y = merged[LABEL_COL]
 
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=42
+    )
 
     model = lgb.LGBMClassifier(n_estimators=100, max_depth=6, random_state=42)
     model.fit(X_train, y_train)
@@ -66,22 +121,11 @@ def train_filter_model():
     y_pred = model.predict(X_val)
     y_proba = model.predict_proba(X_val)[:, 1]
 
-    logger.info("Model Performance on Validation Set:")
+    logger.info("📊 Model Performance on Validation Set:")
     logger.info("\n" + classification_report(y_val, y_pred))
-    logger.info(f"ROC AUC: {roc_auc_score(y_val, y_proba):.3f}")
+    logger.info(f"🔍 ROC AUC: {roc_auc_score(y_val, y_proba):.3f}")
 
-    # Save predictions
-    X_val = X_val.copy()
-    X_val["score"] = y_proba
-    X_val["rank"] = X_val["score"].rank(pct=True)
-    X_val["confidence"] = X_val["score"]
-    X_val["decision"] = (X_val["score"] > 0.5).map({True: "buy", False: "reject"})
-    X_val["stock"] = merged.iloc[X_val.index]["stock"].values
-    X_val["date"] = merged.iloc[X_val.index]["date"].values
-
-    save_data(X_val[["date", "stock", "score", "rank", "confidence", "decision"]], PRED_TABLE, if_exists="replace")
-    joblib.dump(model, MODEL_PATH)
-    logger.success("✅ Filter model trained and saved. Predictions written to DB.")
+    save_model_and_predictions(model, X_val, y_proba, merged)
 
 
 if __name__ == "__main__":

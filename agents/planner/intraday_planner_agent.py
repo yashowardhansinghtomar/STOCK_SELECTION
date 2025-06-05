@@ -46,7 +46,7 @@ class IntradayPlannerAgent:
         return list(set(symbols))  # deduplicate
 
     def _fallback_poll(self) -> list:
-        df_filtered = load_data(settings.selected_table)
+        df_filtered = load_data(settings.ml_selected_stocks_table)
         if df_filtered is None or df_filtered.empty:
             logger.warnings("⚠️ No ML-selected stocks in fallback.")
             return settings.fallback_stocks

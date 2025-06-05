@@ -65,7 +65,7 @@ def train_dual_model(df_name: str = "training_data"):
     acc = accuracy_score(y_test_c, clf_final.predict(X_test_c))
     logger.info(f"📊 Classifier accuracy: {acc:.4f}")
 
-    save_model(settings.dual_classifier_model_name, {
+    save_model(settings.model_names["dual"] + "_classifier", {
         "model": clf_final,
         "features": list(X.columns),
         "params": best_clf_params
@@ -124,7 +124,7 @@ def train_dual_model(df_name: str = "training_data"):
     mse = mean_squared_error(y_test_r, reg_final.predict(X_test_r))
     logger.info(f"📉 Regressor MSE: {mse:.4f}")
 
-    save_model(settings.dual_regressor_model_name, {
+    save_model(settings.model_names["dual"] + "_regressor", {
         "model": reg_final,
         "features": list(X_reg.columns),
         "params": best_reg_params

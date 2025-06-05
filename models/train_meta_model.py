@@ -10,7 +10,6 @@ from core.data_provider.data_provider import load_data, save_data
 from core.feature_engineering.feature_enricher_multi import enrich_multi_interval_features
 from core.config.config import settings, get_feature_columns
 
-
 def train_meta_model():
     logger.start("🧠 Training Meta Model with Multi-Interval Features...")
 
@@ -62,7 +61,7 @@ def train_meta_model():
 
     logger.success(f"✅ Meta model trained. RMSE: {rmse:.4f}")
 
-    save_model("meta_model", {
+    save_model(settings.model_names["meta"], {
         "model": model,
         "features": list(X.columns),
         "params": {
@@ -72,7 +71,7 @@ def train_meta_model():
     })
 
     save_data(pd.DataFrame([{
-        "model_name": "meta_model",
+        "model_name": settings.model_names["meta"],
         "date": pd.Timestamp.now(),
         "rmse": rmse,
         "accuracy": None

@@ -6,6 +6,7 @@ from typing import List, Tuple, Dict, Optional
 from pathlib import Path
 from typing import ClassVar
 
+
 def get_feature_columns(interval: str = "day") -> list:
     base = [
         "sma_short", "sma_long", "rsi_thresh",
@@ -85,11 +86,9 @@ class Settings(BaseSettings):
     instruments_table: str         = "instruments"
     skiplist_table: str            = "skiplist_stocks"
     encoding_table: str            = "stock_encoding"
-    grid_params_table: str         = "grid_params"
     filter_model_predictions_table: str = "filter_model_predictions"
     param_model_predictions_table: str  = "param_model_predictions"
     price_model_predictions_table: str  = "price_model_predictions"
-    selected_table: str            = "ml_selected_stocks"
     # ─── Agent & Model Names ──────────────────────────────────────────
     filter_model_name: str          = "filter_model"
     dual_classifier_model_name: str = "dual_model_classifier"
@@ -166,14 +165,9 @@ class Settings(BaseSettings):
         "day": "stock_features_day",
         "15minute": "stock_features_15m",
         "60minute": "stock_features_60m",
-        "minute": "stock_features_1m",  # if you're using "minute"
+        "minute": "stock_features_1m"
     }
 
-
-    exit_feature_columns: List[str] = [
-        "exit_kind", "stop_loss", "take_profit", "trail",
-        "exit_sma_window", "max_holding_days"
-    ]
 
     training_columns: List[str] = indicator_columns + exit_feature_columns + ["target"]
 
@@ -271,6 +265,17 @@ class Settings(BaseSettings):
         extra       = "allow"
 
 settings = Settings()
+
+def get_feature_table(interval: str) -> str:
+    """
+    Returns the correct SQL table name for the given interval (e.g., 'day', '15minute').
+    Raises ValueError for unknown intervals.
+    """
+    table_map = settings.interval_feature_table_map
+    if interval not in table_map:
+        raise ValueError(f"Unknown interval '{interval}'. Available: {list(table_map.keys())}")
+    return table_map[interval]
+
 
 print("🧪 Loaded database_url =", settings.database_url)
 

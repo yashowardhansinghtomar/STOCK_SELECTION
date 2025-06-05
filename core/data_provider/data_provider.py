@@ -216,17 +216,11 @@ def get_last_close(symbol: str, sim_date: datetime = None) -> Optional[float]:
         return None
 
 
-
-
 def delete_cached_features(stock: str, sim_date: datetime, interval: str = "day") -> None:
     session = SessionLocal()
     try:
-        table_key = {
-            "day": settings.feature_table_day,
-            "15minute": settings.feature_table_15m,
-            "60minute": settings.feature_table_60m,
-            "minute": settings.feature_table_1m,
-        }.get(interval)
+        from core.config.config import get_feature_table
+        table_key = get_feature_table(interval)
 
         Model = ORM_MODEL_MAP.get(table_key)
         if not Model:
