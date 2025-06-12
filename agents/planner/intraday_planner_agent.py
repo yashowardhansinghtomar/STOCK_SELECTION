@@ -110,13 +110,13 @@ class IntradayPlannerAgent:
         df = pd.DataFrame(final_signals).sort_values(by="confidence", ascending=False).head(self.top_n)
         logger.success(f"✅ Selected top {len(df)} intraday trades.")
 
-        insert_with_conflict_handling(df, settings.recommendations_table)
+        insert_with_conflict_handling(df, settings.tables.recommendations)
 
         # 🛠️ NEW: Exit logic for intraday trades before entering
-        open_positions = load_data(settings.open_positions_table)
+        open_positions = load_data(settings.tables.open_positions)
         remaining, exited = self.execution_agent.exit_trades(open_positions)
         if not exited.empty:
-            insert_with_conflict_handling(exited, settings.trades_table)
+            insert_with_conflict_handling(exited, settings.tables.trades)
             logger.success(f"✅ Exited {len(exited)} intraday positions.")
 
         # ✅ Enter new intraday positions

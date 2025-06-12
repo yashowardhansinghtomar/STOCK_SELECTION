@@ -19,7 +19,7 @@ def load_training_data():
     return trades_df[["stock", "date", "enter", "price"]]
 
 def sample_negative_examples(trades_df, sample_size=2):
-    recs_df = load_data(settings.recommendations_table)
+    recs_df = load_data(settings.tables.recommendations)
     if recs_df is None or recs_df.empty:
         return pd.DataFrame()
 

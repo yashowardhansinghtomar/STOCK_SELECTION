@@ -5,9 +5,9 @@ import json
 from core.logger.logger import logger
 from core.time_context.time_context import get_simulation_date
 from core.data_provider.data_provider import load_data, save_data
-from core.config.config import settings
+from core.config.config import settings, FeatureGroupConfig
 from core.feature_engineering.feature_enricher_multi import enrich_multi_interval_features
-from rl.replay_buffer import ReplayBuffer
+from db.replay_buffer_sql import ReplayBuffer
 from pytz import timezone
 
 IST = timezone("Asia/Kolkata")
@@ -30,7 +30,7 @@ def update_training_data():
     today = pd.to_datetime(get_simulation_date()).astimezone(IST)
     today_date = today.date()
 
-    trades = load_data(settings.trades_table)
+    trades = load_data(settings.tables.trades)
     if trades is None or trades.empty:
         logger.info("📬 No paper trades to update.")
         return
@@ -116,7 +116,7 @@ def update_training_data():
     df["exit_sma_window"] = df["strategy_config"].apply(lambda x: parse_exit_field(x, "sma_window"))
     df["max_holding_days"] = df["strategy_config"].apply(lambda x: parse_exit_field(x, "max_holding_days"))
 
-    training_df = df[settings.training_columns + ["interval"]].copy()
+    training_df = df[FeatureGroupConfig.training_columns + ["interval"]].copy()
     training_df = training_df.dropna(subset=["target"])
 
     if training_df.empty:
@@ -139,7 +139,7 @@ def update_training_data():
     # Keep only the required columns
     final_df = training_df[["stock", "entry_date", "features", "label", "run_timestamp"]].copy()
 
-    save_data(final_df, settings.training_data_table)
+    save_data(final_df, settings.tables.training_data)
     logger.success(f"✅ Inserted {len(final_df)} new training rows.")
 
 

@@ -4,7 +4,7 @@ import pandas as pd
 from models.joint_policy import JointPolicyModel
 from core.time_context.time_context import get_simulation_date
 from core.data_provider.data_provider import load_data
-from core.feature_provider import fetch_features
+from core.feature_engineering.feature_provider import fetch_features
 from core.config.config import settings
 from db.conflict_utils import insert_with_conflict_handling
 from core.logger.logger import logger
@@ -15,7 +15,7 @@ def run_joint_policy_predictions():
     today_str = today.strftime("%Y-%m-%d")
 
     # Step 1: Load today's recommendations
-    df = load_data(settings.recommendations_table)
+    df = load_data(settings.tables.recommendations)
     if df is None or df.empty:
         logger.warning("⚠️ No recommendations found.")
         return

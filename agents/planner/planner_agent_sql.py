@@ -112,7 +112,7 @@ class PlannerAgentSQL:
 
     def _fetch_price_history(self):
         logger.info(f"{self.prefix}"+str("📥 Fetching price history for all symbols..."))
-        inst = load_data(settings.instruments_table)
+        inst = load_data(settings.tables.instruments)
         if inst is None or inst.empty:
             logger.warnings("⚠️ No instruments found; skipping price fetch.", prefix=self.prefix)
             return
@@ -253,7 +253,7 @@ class PlannerAgentSQL:
 
         if all_signals:
             df = pd.DataFrame(all_signals).sort_values(by="confidence", ascending=False).head(self.top_n)
-            insert_with_conflict_handling(df, settings.recommendations_table)
+            insert_with_conflict_handling(df, settings.tables.recommendations)
             logger.success(f"✅ Saved {len(df)} final signals.", prefix=self.prefix)
         else:
             logger.warnings("❌ No valid signals produced.", prefix=self.prefix)

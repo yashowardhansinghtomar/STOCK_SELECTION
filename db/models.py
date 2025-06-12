@@ -173,6 +173,7 @@ class Recommendation(Base):
     trade_triggered   = Column(Integer)
     interval          = Column(String, default="day")
     label             = Column(Integer, nullable=True)
+    created_at        = Column(DateTime, default=datetime.utcnow)  # ✅ ADD THIS LINE
 
 class OpenPosition(Base):
     __tablename__ = 'open_positions'
@@ -182,6 +183,7 @@ class OpenPosition(Base):
     sma_short     = Column(Float)
     sma_long      = Column(Float)
     rsi_thresh    = Column(Float)
+    strategy_config = Column(JSON, default={})
     interval      = Column(String, default="day")
 
 class PaperTrade(Base):
@@ -255,7 +257,7 @@ class SystemLog(Base):
 
 
 class MLSelectedStock(Base):
-    __tablename__ = settings.ml_selected_stocks_table
+    __tablename__ = settings.tables.ml_selected
 
     id          = Column(Integer, primary_key=True, autoincrement=True)
     stock       = Column(String(20), nullable=False)
@@ -264,3 +266,4 @@ class MLSelectedStock(Base):
 
     def __repr__(self):
         return f"<MLSelectedStock(id={self.id!r}, stock={self.stock!r}, source={self.source!r}, imported_at={self.imported_at!r})>"
+

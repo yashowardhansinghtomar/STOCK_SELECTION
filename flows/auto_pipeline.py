@@ -55,11 +55,11 @@ def run_filter(run_date: date):
 
 @task
 def backtest_and_label(selected, run_date: date):
-    from core.backtest_bt import run_backtest
+    from core.backtest_bt import run_backtest_config
     from agents.memory.feedback_loop import update_training_data
     logger = get_run_logger()
     for rec in selected.to_dict(orient="records"):
-        run_backtest(**rec, run_date=run_date)
+        run_backtest_config(**rec, run_date=run_date)
         logger.info(f"[{run_date}] backtested {rec['stock']}")
     update_training_data()
     logger.info(f"[{run_date}] feedback loop complete")

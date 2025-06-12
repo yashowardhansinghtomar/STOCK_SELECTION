@@ -36,9 +36,13 @@ def run_query(query: str, params=None, fetchall=True):
             stmt = text(query)
 
         result = conn.execute(stmt, params or {})
-        if fetchall:
+
+        # ✅ Only fetch results if the statement returns rows
+        if fetchall and result.returns_rows:
             return result.fetchall()
+
         return None
+
 
 def execute_raw_sql(sql: str):
     with engine.begin() as conn:

@@ -1,7 +1,7 @@
 # agents/risk_management_agent.py
 
 from core.logger.logger import logger
-from core.replay.replay_logger import log_replay_row
+from agents.replay_logger import log_replay_row
 
 class RiskManagementAgent:
     def __init__(self):

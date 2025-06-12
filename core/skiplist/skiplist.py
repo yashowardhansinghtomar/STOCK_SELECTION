@@ -24,8 +24,12 @@ def is_in_skiplist(stock: str, silent: bool = False) -> bool:
 
 def add_to_skiplist(stock: str, reason: str = "unknown", ttl_days: int = None):
     try:
-        expires_clause = ", expires_at = now() + interval ':ttl days'" if ttl_days else ", expires_at = NULL"
-        query = f"""
+        FALLBACK_STOCKS = settings.fallback_stocks
+        if stock.upper() in FALLBACK_STOCKS:
+            logger.warning(f"🛑 Refused to add fallback stock '{stock}' to skiplist.")
+            return
+
+        query = """
         INSERT INTO skiplist_stocks (stock, reason, imported_at, expires_at)
         VALUES (:stock, :reason, now(), 
                 CASE WHEN :ttl IS NOT NULL THEN now() + interval ':ttl days' ELSE NULL END)
@@ -40,6 +44,7 @@ def add_to_skiplist(stock: str, reason: str = "unknown", ttl_days: int = None):
             logger.warning(f"⛔️ {stock} → skiplist: {reason} {expiry_msg}")
     except Exception as e:
         logger.warning(f"⚠️ Failed to add {stock} to skiplist: {e}")
+
 
 def remove_from_skiplist(stock: str):
     try:

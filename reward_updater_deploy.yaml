@@ -1,7 +1,0 @@
-name: daily-rl-reward-updater
-schedule:
-  cron: "15 23 * * *"  # Runs at 11:15 PM daily
-  timezone: "Asia/Kolkata"
-entrypoint: flows/update_rl_rewards_flow.py:update_rl_rewards_flow
-tags: [rl, rewards]
-parameters: {}

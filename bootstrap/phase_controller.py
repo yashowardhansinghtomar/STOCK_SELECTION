@@ -1,5 +1,6 @@
 # phase_controller.py
 from core.market_conditions import get_volatility_regime
+from db.replay_buffer_sql import policy_converged
 from bootstrap.trade_generator import (
     generate_random_trades,
     generate_rule_based_trades,
@@ -14,15 +15,17 @@ class PhaseController:
         self.phase = initial_phase
         self.epsilon = 0.9  # starting exploration rate
 
+
     def update_phase(self, replay_buffer):
         real_count = replay_buffer.count_real_trades()
         if self.phase == 0 and real_count > 200:
             self.phase = 1
-        elif self.phase == 1 and replay_buffer.policy_converged():
+        elif self.phase == 1 and policy_converged():
             self.phase = 2
 
-        # Adjust epsilon gradually
+        # Decay epsilon gradually
         self.epsilon = max(0.1, self.epsilon - 0.01)
+
 
     def generate_trades(self, filtered_stocks, date):
         vol_regime = get_volatility_regime(date)

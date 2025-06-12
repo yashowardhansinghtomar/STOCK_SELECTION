@@ -22,7 +22,7 @@ def get_all_candidates(date: str) -> list:
     from core.config.config import settings
     from core.data_provider.data_provider import load_data
 
-    df = load_data(settings.recommendations_table)
+    df = load_data(settings.tables.recommendations)
     if df is None or df.empty:
         return []
 
@@ -33,7 +33,7 @@ def get_traded_today(date: str) -> list:
     from core.config.config import settings
     from core.data_provider.data_provider import load_data
 
-    df = load_data(settings.trades_table)
+    df = load_data(settings.tables.trades)
     if df is None or df.empty:
         return []
 

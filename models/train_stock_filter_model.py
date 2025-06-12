@@ -1,9 +1,6 @@
-# models/train_stock_filter_model.py
-
 import pandas as pd
 import lightgbm as lgb
 import joblib
-import random
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
@@ -15,7 +12,7 @@ from pathlib import Path
 
 FEATURE_TABLE = "stock_features_day"
 RECS_TABLE = "recommendations"
-PRED_TABLE = "filter_model_predictions"
+PRED_TABLE = settings.tables.predictions["filter"]
 
 FEATURE_COLS = [
     "sma_short", "sma_long", "rsi_thresh", "macd", "vwap", "atr_14",
@@ -34,75 +31,74 @@ def save_model_and_predictions(model, X_val, y_proba, merged):
     preds["stock"] = merged.iloc[preds.index]["stock"].values
     preds["date"] = merged.iloc[preds.index]["date"].values
 
-    save_data(preds[["date", "stock", "score", "rank", "confidence", "decision"]],
-              PRED_TABLE, if_exists="replace")
+    save_data(
+        preds[["date", "stock", "score", "rank", "confidence", "decision"]],
+        PRED_TABLE,
+        if_exists="replace"
+    )
 
     model_path = Path(settings.model_dir) / f"{settings.model_names['filter']}.lgb"
     joblib.dump(model, model_path)
     logger.success("✅ Filter model trained and saved. Predictions written to DB.")
 
 
-def train_filter_model(force_dummy=False):
+def train_filter_model():
     recs = load_data(RECS_TABLE)
     feats = load_data(FEATURE_TABLE)
 
-    if recs.empty or force_dummy:
-        logger.warning("💡 No recommendations found — generating dummy data for bootstrap.")
+    # Drop rows with bad dates
+    recs = recs.dropna(subset=["date"])
+    feats = feats.dropna(subset=["date"])
 
-        if feats.empty:
-            logger.warning("❌ Feature data is missing. Cannot proceed.")
-            return
+    # Normalize join keys
+    recs["stock"] = recs["stock"].str.strip().str.upper()
+    feats["stock"] = feats["stock"].str.strip().str.upper()
+    recs["date"] = pd.to_datetime(recs["date"]).dt.normalize()
+    feats["date"] = pd.to_datetime(feats["date"]).dt.normalize()
 
-        valid_dates = feats["date"].drop_duplicates().sort_values().head(5).tolist()
-        valid_stocks = feats["stock"].drop_duplicates().tolist()
-        dummy_stocks = [s for s in ["RELIANCE", "SBIN", "INFY", "LT", "ICICIBANK"] if s in valid_stocks]
+    logger.info(f"🧪 RECS: {len(recs)} rows | FEATS: {len(feats)} rows")
+    try:
+        logger.info(f"📆 RECS date range: {recs['date'].min().date()} → {recs['date'].max().date()}")
+        logger.info(f"📆 FEATS date range: {feats['date'].min().date()} → {feats['date'].max().date()}")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not compute date ranges: {e}")
 
-        if not dummy_stocks or not valid_dates:
-            logger.warning("⚠️ No valid dummy stocks or dates available.")
-            return
+    if recs.empty:
+        logger.error("❌ No recommendations found. Please run bootstrap_filter_training_data.py first.")
+        return
+    if feats.empty:
+        logger.error("❌ No feature data found. Please backfill stock_features_day first.")
+        return
 
-        dummy_recs = pd.DataFrame([
-            {"stock": stock, "date": date, "label": random.choice([0, 1])}
-            for stock in dummy_stocks for date in valid_dates
-        ])
+    logger.debug(f"📋 RECS columns: {list(recs.columns)}")
+    logger.debug(f"📋 FEATS columns: {list(feats.columns)}")
 
-        dummy_feats = pd.DataFrame([
-            {
-                "stock": stock,
-                "date": date,
-                "sma_short": random.randint(5, 15),
-                "sma_long": random.randint(20, 50),
-                "rsi_thresh": random.randint(30, 70),
-                "macd": random.uniform(-1, 1),
-                "vwap": random.uniform(100, 500),
-                "atr_14": random.uniform(1, 5),
-                "bb_width": random.uniform(0.5, 2),
-                "macd_histogram": random.uniform(-0.5, 0.5),
-                "price_compression": random.uniform(0, 1),
-                "volatility_10": random.uniform(0.1, 2),
-                "volume_spike": random.uniform(0.5, 3),
-                "vwap_dev": random.uniform(-2, 2),
-                "stock_encoded": hash(stock) % 1000,
-            }
-            for stock in dummy_stocks for date in valid_dates
-        ])
+    merged = recs.merge(feats, on=["stock", "date"], how="inner", suffixes=('', '_feat'))
+    logger.info(f"🔍 Merged rows: {len(merged)}")
 
-        save_data(dummy_recs, RECS_TABLE)
-        save_data(dummy_feats, FEATURE_TABLE)
-        recs = dummy_recs
-        feats = dummy_feats
-        logger.info(f"✅ Inserted {len(dummy_recs)} dummy recs and {len(dummy_feats)} dummy features.")
+    if merged.empty:
+        mismatch = recs.merge(feats, on=["stock", "date"], how="left", indicator=True)
+        unmatched = mismatch[mismatch["_merge"] == "left_only"]
+        logger.warning(f"⚠️ Mismatched recommendation rows: {len(unmatched)} / {len(recs)}")
+        logger.debug(f"📄 Unmatched preview:\n{unmatched[['stock', 'date']].head()}")
+        logger.error("❌ Merge produced 0 rows — check for date mismatches or missing symbols.")
+        return
 
-    merged = recs.merge(feats, on=["stock", "date"])
-    logger.info(f"🔍 Loaded {len(merged)} merged rows for training")
+    logger.debug(f"📋 Merged columns: {list(merged.columns)}")
 
     missing_cols = [col for col in FEATURE_COLS + [LABEL_COL] if col not in merged.columns]
     if missing_cols:
         logger.error(f"❌ Missing required columns in merged data: {missing_cols}")
         return
 
+    if merged[LABEL_COL].isnull().all():
+        logger.warning("⚠️ Label column is present but all values are null.")
+
+    before_dropna = len(merged)
     merged = merged.dropna(subset=FEATURE_COLS + [LABEL_COL])
-    logger.info(f"📈 Training on {len(merged)} merged records after dropping NA.")
+    after_dropna = len(merged)
+    logger.info(f"📉 Dropped {before_dropna - after_dropna} rows with missing features or labels.")
+    logger.info(f"📈 Remaining for training: {after_dropna} rows")
 
     if len(merged) < 100:
         logger.warning("⚠️ Not enough labeled data to train a robust model. Skipping model training.")

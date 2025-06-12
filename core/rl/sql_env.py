@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from gym import spaces
 from core.logger.logger import logger
-from core.feature_store.feature_store import get_or_compute
+from core.feature_engineering.feature_provider import fetch_features
 from core.time_context.time_context import get_simulation_date
 from db.postgres_manager import run_query
 
@@ -20,7 +20,7 @@ class ODINSQLTradingEnv(gym.Env):
         self.events = self._load_events()
         self.index = 0
 
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(13,), dtype=np.float32)
+        self.observation_space = self._infer_observation_space()
         self.action_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
 
     def _load_events(self):
@@ -40,6 +40,21 @@ class ODINSQLTradingEnv(gym.Env):
             logger.warning("[SQL ENV] No replay events available in SQL.")
             return []
 
+    def _infer_observation_space(self):
+        for event in self.events:
+            df = fetch_features(
+                stock=event["stock"],
+                interval="15minute",
+                start=event["date"],
+                end=event["date"],
+                refresh_if_missing=True
+            )
+            if df is not None and not df.empty:
+                shape = df.drop(columns=["stock", "date", "interval"], errors="ignore").values[0].shape
+                return spaces.Box(low=-np.inf, high=np.inf, shape=shape, dtype=np.float32)
+        logger.warning("[SQL ENV] Could not infer feature shape. Using default (13,).")
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(13,), dtype=np.float32)
+
     def _parse_event(self, event):
         try:
             symbol = event["stock"]
@@ -55,7 +70,13 @@ class ODINSQLTradingEnv(gym.Env):
             total_reward = base_reward + capital_efficiency - holding_cost - slippage_penalty
             done = bool(event.get("done", True))
 
-            df = get_or_compute(symbol, interval="15minute", date=date)
+            df = fetch_features(
+                stock=symbol,
+                interval="15minute",
+                start=date,
+                end=date,
+                refresh_if_missing=True
+            )
             if df is None or df.empty:
                 obs = np.zeros(self.observation_space.shape)
             else:
@@ -94,4 +115,3 @@ class ODINSQLTradingEnv(gym.Env):
         self.index += 1
         obs, reward, done, info = self._parse_event(event)
         return obs.astype(np.float32), float(reward), done, False, info
-

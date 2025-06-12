@@ -1,4 +1,0 @@
-prefect deploy flows/train_joint_policy_flow.py:train_joint_policy_flow `
-  --name train-joint-policy `
-  --cron "45 23 * * *" `
-  --timezone "Asia/Kolkata"

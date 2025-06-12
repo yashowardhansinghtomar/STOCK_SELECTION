@@ -49,7 +49,7 @@ def get_model_state():
 
 
 def get_planner_state():
-    df = load_data(settings.recommendations_table)
+    df = load_data(settings.tables.recommendations)
     today = pd.to_datetime(get_simulation_date()).date()
     if df is None or df.empty:
         return {"status": "ERROR", "message": "No recommendations data."}
@@ -62,8 +62,8 @@ def get_planner_state():
 
 
 def get_execution_state():
-    trades = load_data(settings.trades_table)
-    open_pos = load_data(settings.open_positions_table)
+    trades = load_data(settings.tables.trades)
+    open_pos = load_data(settings.tables.open_positions)
     today = pd.to_datetime(get_simulation_date()).date()
     count_today = 0
     if trades is not None and not trades.empty:

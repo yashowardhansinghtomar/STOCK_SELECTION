@@ -1,15 +1,16 @@
 # core/feature_engineering/feature_provider_old.py
 
-
 import pandas as pd
+from datetime import datetime, timedelta
+from core.logger.logger import logger
+from core.config.config import settings
+from core.skiplist.skiplist import is_in_skiplist
+from core.feature_store.feature_store import get_or_compute
+from core.feature_engineering.regime_features import compute_regime_features
 from core.data_provider.data_provider import fetch_stock_data, load_data
 from core.feature_engineering.precompute_features import compute_features, insert_feature_row
 from db.db import SessionLocal
-from core.logger.logger import logger
-from core.config.config import settings
 from sqlalchemy.sql import text
-from core.skiplist.skiplist import is_in_skiplist
-from datetime import datetime, timedelta
 
 FREQ_MAP = {
     "day": "B",
@@ -50,9 +51,21 @@ def process_and_insert(df_price: pd.DataFrame, stock: str, interval: str) -> pd.
 
 def fetch_features(stock: str, interval: str, refresh_if_missing: bool = True, start: str = None, end: str = None) -> pd.DataFrame:
     if is_in_skiplist(stock):
-        logger.warning(f"Skipping {stock} — already in skiplist.")
+        logger.warning(f"⏩ Skipping {stock} — already in skiplist.")
         return pd.DataFrame()
 
+    try:
+        date = pd.to_datetime(start).date() if start else pd.to_datetime(datetime.now()).date()
+        features = get_or_compute(stock, interval, str(date)) if refresh_if_missing else pd.DataFrame()
+        if not features.empty:
+            raw_df = get_or_compute(stock, interval, str(date), window=20)
+            regime_df = compute_regime_features(raw_df)
+            features = pd.merge(features, regime_df, on="date", how="left")
+            return features
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to fetch/compute features for {stock} @ {interval}: {e}")
+
+    # Fallback to legacy method if cache fails or feature store not populated
     table = settings.interval_feature_table_map.get(interval)
     if not table:
         logger.error(f"Unknown interval: {interval}")
@@ -106,22 +119,25 @@ def fetch_features(stock: str, interval: str, refresh_if_missing: bool = True, s
 
     return df_main
 
-
 def fetch_features_with_backfill(stock: str, interval: str, sim_date=None) -> pd.DataFrame:
-    df = load_data(settings.interval_feature_table_map[interval])
-    if "symbol" in df.columns and "stock" not in df.columns:
-        df = df.rename(columns={"symbol": "stock"})
+    try:
+        date = sim_date if sim_date else datetime.today().date()
+        df = load_data(settings.interval_feature_table_map[interval])
+        if "symbol" in df.columns and "stock" not in df.columns:
+            df = df.rename(columns={"symbol": "stock"})
 
-    if sim_date is not None:
-        df = df[df["date"] == sim_date]
+        df = df[df["stock"] == stock]
+        if sim_date is not None:
+            df = df[df["date"] == sim_date]
 
-    df = df[df["stock"] == stock]
-    if not df.empty:
-        return df
+        if not df.empty:
+            return df
 
-    # Fallback: direct fetch + insert using price_fetch_days
-    logger.warning(f"Fallback to direct fetch for {stock} @ {interval}")
-    end = datetime.today()
-    start = end - timedelta(days=settings.price_fetch_days)
-    return fetch_features(stock, interval, start=start, end=end)
+        logger.warning(f"Fallback to direct fetch for {stock} @ {interval}")
+        end = datetime.today()
+        start = end - timedelta(days=settings.price_fetch_days)
+        return fetch_features(stock, interval, start=start, end=end)
 
+    except Exception as e:
+        logger.warning(f"⚠️ Backfill fallback failed for {stock} @ {interval}: {e}")
+        return pd.DataFrame()

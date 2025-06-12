@@ -1,4 +1,4 @@
-# bootstrap_trader.py
+# bootstrap/bootstrap_trader.py
 
 from datetime import datetime
 import pandas as pd
@@ -8,20 +8,44 @@ from bootstrap.phase_controller import PhaseController
 from core.logger.logger import logger
 from agents.execution.execution_agent_sql import ExecutionAgentSQL
 
+from agents.strategy.rl_strategy_agent import RLStrategyAgent
+from db.replay_buffer_sql import policy_converged
+from db.replay_buffer_sql import SQLReplayBuffer  # ✅ Added import
+
 
 def run_bootstrap_trader(today=None):
     today = pd.to_datetime(today or datetime.now().date())
     logger.info(f"🚨 LIVE BOOTSTRAP TRADER: Running for {today.date()}...")
 
-    phase_controller = PhaseController(initial_phase=0)
     session = None  # Add SQLAlchemy session if needed
     exec_agent = ExecutionAgentSQL(session=session, dry_run=False)
 
     # STEP 1: Select stocks
     filtered_stocks = run_stock_filter(today)
 
-    # STEP 2: Generate trades (ε-greedy)
-    trades = phase_controller.generate_trades(filtered_stocks, today)
+    # STEP 2: Choose planner based on convergence
+    if policy_converged():
+        logger.info("🤖 PPO policy has converged — using RLStrategyAgent for trade generation.")
+        strategy_agent = RLStrategyAgent(today=today)
+        trades = strategy_agent.generate_trades(filtered_stocks)
+
+        # ✅ STEP 2.5: Log PPO trades to SQL replay buffer
+        replay_buffer = SQLReplayBuffer()
+        for trade in trades:
+            if trade.meta.get("source") == "ppo":
+                replay_buffer.add_episode(
+                    stock=trade.symbol,
+                    date=today,
+                    state=trade.meta.get("state"),
+                    action=trade.meta.get("action"),
+                    reward=trade.meta.get("reward"),
+                    next_state=trade.meta.get("next_state"),
+                    done=trade.meta.get("done", False),
+                )
+    else:
+        logger.info("🧪 PPO not converged — using ε-greedy exploration via PhaseController.")
+        phase_controller = PhaseController(initial_phase=0)
+        trades = phase_controller.generate_trades(filtered_stocks, today)
 
     # STEP 3: Convert to DataFrame format expected by enter_trades
     trade_df = pd.DataFrame([{

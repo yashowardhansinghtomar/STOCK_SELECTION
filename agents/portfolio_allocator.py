@@ -17,7 +17,7 @@ class PortfolioAllocatorAgent:
         self.sector_limits = sector_limits or {}
 
     def load_open_positions(self):
-        df = load_data(settings.open_positions_table)
+        df = load_data(settings.tables.open_positions)
         if df is None or df.empty:
             return pd.DataFrame(columns=["stock", "entry_price", "entry_date", "strategy_config"])
         return df

@@ -53,7 +53,7 @@ class MemoryAgent:
             logger.error(f"{self.prefix}❌ Archive failed for {phys}: {e}")
 
     def summarize_weekly_performance(self):
-        df = load_data(settings.trades_table)
+        df = load_data(settings.tables.trades)
         if df is None or df.empty:
             logger.info(f"{self.prefix}📬 No paper trades to summarize.")
             return
@@ -82,8 +82,8 @@ class MemoryAgent:
     def check_retraining_needed(self):
         logger.start("🧠 Checking retraining thresholds...", prefix=self.prefix)
 
-        trades = load_data(settings.trades_table)
-        training_data = load_data(settings.training_data_table)
+        trades = load_data(settings.tables.trades)
+        training_data = load_data(settings.tables.training_data)
         if training_data is None:
             training_data = pd.DataFrame()
 

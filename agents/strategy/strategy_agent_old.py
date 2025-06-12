@@ -188,7 +188,7 @@ class StrategyAgent:
 
 
     def _handle_grid_fallback(self, stock: str) -> dict:
-        df = load_data(settings.recommendations_table)
+        df = load_data(settings.tables.recommendations)
         if df is None or df.empty:
             return {}
 

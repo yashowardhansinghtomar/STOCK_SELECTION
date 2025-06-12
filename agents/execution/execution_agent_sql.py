@@ -5,25 +5,25 @@ from datetime import datetime
 
 import pandas as pd
 from core.time_context.time_context import get_simulation_date
-from core.config.config import settings
+from core.config.config import settings, FeatureGroupConfig
 from core.data_provider.data_provider import load_data, fetch_stock_data
 from core.logger.logger import logger
 from core.logger.system_logger import log_event
 from db.conflict_utils import insert_with_conflict_handling
 from db.postgres_manager import run_query
 from services.exit_policy_evaluator import get_exit_probability
-from rl.replay_buffer import ReplayBuffer
+from db.replay_buffer_sql import SQLReplayBuffer  as ReplayBuffer
 from core.feature_engineering.feature_enricher_multi import enrich_multi_interval_features
 from db.replay_buffer_sql import insert_replay_episode
 from core.event_bus import publish_event
 from agents.execution.trade_execution_helper import TradeExecutionHelper
 
 CAPITAL_PER_TRADE = settings.capital_per_trade
-TABLE_TRADES = settings.trades_table
-TABLE_OPEN_POS = settings.open_positions_table
-TABLE_RECS = settings.recommendations_table
-TABLE_PARAM_PRED = "param_model_predictions"
-TABLE_FILTER_PRED = "filter_model_predictions"
+TABLE_TRADES = settings.tables.trades
+TABLE_OPEN_POS = settings.tables.open_positions
+TABLE_RECS = settings.tables.recommendations
+TABLE_PARAM_PRED = settings.tables.predictions["param"]
+TABLE_FILTER_PRED = settings.tables.predictions["filter"]
 
 REPLAY_DIR = "ppo_buffers"
 os.makedirs(REPLAY_DIR, exist_ok=True)
@@ -47,7 +47,7 @@ class ExecutionAgentSQL:
         self.executor = TradeExecutionHelper(self.today, dry_run=self.dry_run, prefix=self.prefix)
 
     def load_signals(self) -> pd.DataFrame:
-        df = safe_load_table(TABLE_RECS, settings.recommendation_columns)
+        df = safe_load_table(TABLE_RECS, FeatureGroupConfig.recommendation_columns)
         if "trade_triggered" not in df.columns:
             logger.error(f"{self.prefix}"+str("Missing `trade_triggered` in recommendations."))
             return pd.DataFrame()
@@ -60,7 +60,12 @@ class ExecutionAgentSQL:
         return df.head(settings.top_n) if self.dev_mode else df
 
     def load_open_positions(self) -> pd.DataFrame:
-        df = safe_load_table(TABLE_OPEN_POS, ["stock", "entry_price", "entry_date", "strategy_config"])
+        df = safe_load_table(TABLE_OPEN_POS, [
+            "stock", "entry_price", "entry_date",
+            "sma_short", "sma_long", "rsi_thresh",
+            "strategy_config", "interval"
+        ])
+
         if "symbol" in df.columns:
             df = df.rename(columns={"symbol": "stock"})
         if "stock" not in df.columns:
@@ -264,22 +269,8 @@ class ExecutionAgentSQL:
 
                     # ✅ Also log to SQL replay buffer
                     try:
-                        insert_replay_episode({
-                            "stock": sym,
-                            "date": self.today,
-                            "interval": interval,
-                            "action": "buy",
-                            "reward": None,
-                            "features": {
-                                "sma_short": sig.get("sma_short", 0),
-                                "sma_long": sig.get("sma_long", 0),
-                                "rsi_thresh": sig.get("rsi_thresh", 0),
-                                "confidence": sig.get("confidence", 0.0),
-                                "sharpe": sig.get("sharpe", 0.0),
-                                "rank": sig.get("rank", 0),
-                            },
-                            "strategy_config": strategy_cfg,
-                        })
+                        ReplayBuffer().add(result)
+
                     except Exception as e:
                         logger.warning(f"{self.prefix} Replay SQL insert failed for {sym}: {e}")
 
@@ -335,8 +326,8 @@ class ExecutionAgentSQL:
         try:
             run_query(f'DELETE FROM "{TABLE_OPEN_POS}"', fetchall=False)
         except Exception as e:
-            logger.warnings(f"Could not clear open positions: {e}", prefix=self.prefix)
-        cols = ["stock", "entry_price", "entry_date", "interval"]
+            logger.warning(f"Could not clear open positions: {e}", prefix=self.prefix)
+        cols = ["stock", "entry_price", "entry_date", "sma_short", "sma_long", "rsi_thresh", "strategy_config", "interval"]
         if not open_positions.empty and not self.dry_run:
             insert_with_conflict_handling(open_positions[cols], TABLE_OPEN_POS)
             logger.info(f"{self.prefix}"+str(f"{len(open_positions)} open positions saved."))

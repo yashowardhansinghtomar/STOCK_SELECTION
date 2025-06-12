@@ -1,28 +1,31 @@
 Project Summary for: Y:\Trading\stock_selection
 
 🧠 Data Access Points:
-• report_generator.py → load_data(MISSING_ARG, source_dest=default)
-• test_fetch_price.py → load_data(FEATURE_TABLE, source_dest=default)
-• agents\joint_policy_runner.py → load_data(settings.recommendations_table, source_dest=default)
-• agents\missed_trade_logger.py → load_data(settings.recommendations_table, source_dest=default)
-• agents\missed_trade_logger.py → load_data(settings.trades_table, source_dest=default)
-• agents\portfolio_allocator.py → load_data(settings.open_positions_table, source_dest=default)
+• aad.py → load_data('recommendations', source_dest=default)
+• aad.py → load_data('stock_features_day', source_dest=default)
+• debug_merge_issue.py → load_data(RECS_TABLE, source_dest=default)
+• debug_merge_issue.py → load_data(FEATURE_TABLE, source_dest=default)
+• inspect_feature_dates.py → load_data('stock_features_day', source_dest=default)
+• agents\joint_policy_runner.py → load_data(settings.tables.recommendations, source_dest=default)
+• agents\missed_trade_logger.py → load_data(settings.tables.recommendations, source_dest=default)
+• agents\missed_trade_logger.py → load_data(settings.tables.trades, source_dest=default)
+• agents\portfolio_allocator.py → load_data(settings.tables.open_positions, source_dest=default)
 • agents\time_series_agent.py → load_data(settings.price_history_table, source_dest=default)
 • agents\execution\execution_agent_sql.py → load_data(name, source_dest=default)
-• agents\memory\feedback_loop.py → load_data(settings.trades_table, source_dest=default)
+• agents\memory\feedback_loop.py → load_data(settings.tables.trades, source_dest=default)
 • agents\memory\feedback_loop.py → save_data(final_df, source_dest=default)
-• agents\memory\memory_agent.py → load_data(settings.trades_table, source_dest=default)
-• agents\memory\memory_agent.py → load_data(settings.trades_table, source_dest=default)
-• agents\memory\memory_agent.py → load_data(settings.training_data_table, source_dest=default)
+• agents\memory\memory_agent.py → load_data(settings.tables.trades, source_dest=default)
+• agents\memory\memory_agent.py → load_data(settings.tables.trades, source_dest=default)
+• agents\memory\memory_agent.py → load_data(settings.tables.training_data, source_dest=default)
 • agents\planner\intraday_planner_agent.py → load_data(settings.ml_selected_stocks_table, source_dest=default)
-• agents\planner\intraday_planner_agent.py → load_data(settings.open_positions_table, source_dest=default)
+• agents\planner\intraday_planner_agent.py → load_data(settings.tables.open_positions, source_dest=default)
 • agents\planner\planner_agent_sql.py → load_data(settings.fundamentals_table, source_dest=default)
-• agents\planner\planner_agent_sql.py → load_data(settings.instruments_table, source_dest=default)
+• agents\planner\planner_agent_sql.py → load_data(settings.tables.instruments, source_dest=default)
 • agents\planner\planner_agent_sql.py → load_data(settings.feature_table, source_dest=default)
 • agents\planner\planner_agent_sql.py → load_data(settings.ml_selected_stocks_table, source_dest=default)
 • agents\planner\planner_agent_sql.py → load_data(settings.ml_selected_stocks_table, source_dest=default)
 • agents\planner\planner_agent_sql.py → load_data(self.skiplist_table, source_dest=default)
-• agents\strategy\strategy_agent_old.py → load_data(settings.recommendations_table, source_dest=default)
+• agents\strategy\strategy_agent_old.py → load_data(settings.tables.recommendations, source_dest=default)
 • agents\strategy\strategy_agent_old.py → load_data('stock_price_history', source_dest=default)
 • agents\strategy\predictive_trader\backtest_lstm_predictor.py → load_data('stock_features', source_dest=default)
 • agents\strategy\predictive_trader\curve_signal_generator.py → load_data(CURVE_TABLE, source_dest=default)
@@ -34,11 +37,11 @@ Project Summary for: Y:\Trading\stock_selection
 • analysis\joint_policy_comparator.py → load_data('trades', source_dest=default)
 • analysis\joint_policy_comparator.py → load_data('joint_policy_predictions', source_dest=default)
 • bootstrap\bootstrap_filter_training_data.py → save_data(df, source_dest=default)
-• core\model_io.py → load_data(settings.model_store_table, source_dest=default)
+• core\model_io.py → load_data(settings.tables.model_store, source_dest=default)
 • core\system_state.py → load_data(settings.price_history_table, source_dest=default)
-• core\system_state.py → load_data(settings.recommendations_table, source_dest=default)
-• core\system_state.py → load_data(settings.trades_table, source_dest=default)
-• core\system_state.py → load_data(settings.open_positions_table, source_dest=default)
+• core\system_state.py → load_data(settings.tables.recommendations, source_dest=default)
+• core\system_state.py → load_data(settings.tables.trades, source_dest=default)
+• core\system_state.py → load_data(settings.tables.open_positions, source_dest=default)
 • core\system_state.py → load_data(table, source_dest=default)
 • core\data_provider\data_provider.py → save_data(df, source_dest=default)
 • core\data_provider\data_provider.py → save_data(df_1m, source_dest=default)
@@ -47,6 +50,7 @@ Project Summary for: Y:\Trading\stock_selection
 • core\data_provider\fundamentals\fundamental_data_extractor.py → save_data(df, source_dest=default)
 • core\data_provider\processing\data_pipeline\zerodha_to_postgres.py → load_data(INSTRUMENTS_TABLE, source_dest=default)
 • core\data_provider\processing\data_pipeline\zerodha_to_postgres.py → save_data(df, source_dest=default)
+• core\feature_engineering\feature_provider.py → load_data(MISSING_ARG, source_dest=default)
 • core\feature_engineering\feature_provider_old.py → load_data(UNKNOWN_EXPR, source_dest=default)
 • core\filtering\run_filter.py → load_data(PREDICTION_TABLE, source_dest=default)
 • diagnosis\evaluate_model_curves.py → load_data(CURVE_TABLE, source_dest=default)
@@ -70,15 +74,14 @@ Project Summary for: Y:\Trading\stock_selection
 • models\run_stock_filter.py → load_data(FEATURE_TABLE, source_dest=default)
 • models\run_stock_filter.py → save_data(results, source_dest=default)
 • models\train_dual_model_sql.py → load_data(df_name, source_dest=default)
-• models\train_entry_exit_model.py → load_data('paper_trades', source_dest=default)
+• models\train_entry_exit_model.py → load_data(settings.meta_training_table, source_dest=default)
+• models\train_entry_exit_model.py → save_data(UNKNOWN_EXPR, source_dest=default)
 • models\train_exit_model.py → load_data(settings.trades_table, source_dest=default)
 • models\train_meta_model.py → load_data(settings.meta_training_table, source_dest=default)
 • models\train_meta_model.py → save_data(UNKNOWN_EXPR, source_dest=default)
 • models\train_stock_filter_model.py → save_data(UNKNOWN_EXPR, source_dest=default)
 • models\train_stock_filter_model.py → load_data(RECS_TABLE, source_dest=default)
 • models\train_stock_filter_model.py → load_data(FEATURE_TABLE, source_dest=default)
-• models\train_stock_filter_model.py → save_data(dummy_recs, source_dest=default)
-• models\train_stock_filter_model.py → save_data(dummy_feats, source_dest=default)
 • reports\daily_snapshot.py → load_data(TABLE_NAME, source_dest=default)
 • scripts\load_backup_fundamentals.py → save_data(df, source_dest=default)
 • scripts\seed_training_data.py → load_data('stock_features', source_dest=default)
@@ -96,18 +99,19 @@ Project Summary for: Y:\Trading\stock_selection
 • stock_selecter\stock_screener.py → save_data(out, source_dest=default)
 • stock_selecter\stock_screener.py → load_data(settings.ml_selected_stocks_table, source_dest=default)
 • training\train_joint_policy.py → load_data(settings.trades_table, source_dest=default)
-• training\train_joint_policy.py → load_data(settings.recommendations_table, source_dest=default)
+• training\train_joint_policy.py → load_data(settings.tables.recommendations, source_dest=default)
 • utils\precheck_features.py → load_data(stock, source_dest=default)
 • utils\precheck_features.py → load_data(stock, source_dest=default)
 • utils\stock_health_precheck.py → load_data(stock, source_dest=default)
 
 📁 Code Structure Overview:
 └── stock_selection
-    ├── ODIN_phases_doc
+    ├── ODIN_phases_doc.md
     ├── RL_bootstrap_notes.md
     ├── aaa.py
     │   Imports:
-    │     - core.data_provider.data_provider.fetch_stock_data
+    │     - core.data_provider.data_provider.get_last_close
+    │     - datetime.datetime
     ├── aab.py
     │   Imports:
     │     - argparse
@@ -131,7 +135,10 @@ Project Summary for: Y:\Trading\stock_selection
     │   Function: parse_python_file
     │   Function: scan_project
     │   Function: main
-    ├── aac
+    ├── aad.py
+    │   Imports:
+    │     - core.data_provider.data_provider.load_data
+    │     - pandas
     ├── agents
     │   ├── allocator_agent.py
     │   │   Imports:
@@ -161,6 +168,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │   Imports:
     │   │   │     - agents.execution.trade_execution_helper.TradeExecutionHelper
     │   │   │     - bootstrap.trade_generator.Trade
+    │   │   │     - core.config.config.FeatureGroupConfig
     │   │   │     - core.config.config.settings
     │   │   │     - core.data_provider.data_provider.fetch_stock_data
     │   │   │     - core.data_provider.data_provider.load_data
@@ -172,11 +180,11 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     - datetime.datetime
     │   │   │     - db.conflict_utils.insert_with_conflict_handling
     │   │   │     - db.postgres_manager.run_query
+    │   │   │     - db.replay_buffer_sql.SQLReplayBuffer
     │   │   │     - db.replay_buffer_sql.insert_replay_episode
     │   │   │     - json
     │   │   │     - os
     │   │   │     - pandas
-    │   │   │     - rl.replay_buffer.ReplayBuffer
     │   │   │     - services.exit_policy_evaluator.get_exit_probability
     │   │   │     - time
     │   │   │   Class: ExecutionAgentSQL
@@ -215,7 +223,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   Imports:
     │   │     - core.config.config.settings
     │   │     - core.data_provider.data_provider.load_data
-    │   │     - core.feature_provider.fetch_features
+    │   │     - core.feature_engineering.feature_provider.fetch_features
     │   │     - core.logger.logger.logger
     │   │     - core.time_context.time_context.get_simulation_date
     │   │     - datetime.datetime
@@ -226,16 +234,17 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── memory
     │   │   ├── feedback_loop.py
     │   │   │   Imports:
+    │   │   │     - core.config.config.FeatureGroupConfig
     │   │   │     - core.config.config.settings
     │   │   │     - core.data_provider.data_provider.load_data
     │   │   │     - core.data_provider.data_provider.save_data
     │   │   │     - core.feature_engineering.feature_enricher_multi.enrich_multi_interval_features
     │   │   │     - core.logger.logger.logger
     │   │   │     - core.time_context.time_context.get_simulation_date
+    │   │   │     - db.replay_buffer_sql.ReplayBuffer
     │   │   │     - json
     │   │   │     - pandas
     │   │   │     - pytz.timezone
-    │   │   │     - rl.replay_buffer.ReplayBuffer
     │   │   │   Function: parse_exit_field
     │   │   │   Function: update_training_data
     │   │   │   Function: compute_missed_profit
@@ -397,8 +406,8 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── risk
     │   ├── risk_management_agent.py
     │   │   Imports:
+    │   │     - agents.replay_logger.log_replay_row
     │   │     - core.logger.logger.logger
-    │   │     - core.replay.replay_logger.log_replay_row
     │   │   Class: RiskManagementAgent
     │   │     Methods:
     │   │       - __init__
@@ -578,12 +587,12 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │       - evaluate
     │   │   ├── strategy_agent.py
     │   │   │   Imports:
+    │   │   │     - agents.replay_logger.log_replay_row
     │   │   │     - core.config.config.settings
     │   │   │     - core.data_provider.data_provider.load_data
     │   │   │     - core.feature_engineering.feature_enricher_multi.enrich_multi_interval_features
     │   │   │     - core.logger.logger.logger
     │   │   │     - core.predict.predictor.predict_dual_model
-    │   │   │     - core.replay.replay_logger.log_replay_row
     │   │   │     - core.time_context.time_context.get_simulation_date
     │   │   │     - datetime.datetime
     │   │   │     - db.db.SessionLocal
@@ -661,33 +670,55 @@ Project Summary for: Y:\Trading\stock_selection
     ├── bootstrap
     │   ├── bootstrap_filter_training_data.py
     │   │   Imports:
-    │   │     - core.backtest_bt.run_backtest
+    │   │     - core.backtest_bt.run_backtest_config
+    │   │     - core.config.strategy_config.ExitRule
+    │   │     - core.config.strategy_config.StrategyConfig
     │   │     - core.data_provider.data_provider.fetch_stock_data
-    │   │     - core.data_provider.data_provider.get_all_symbols
     │   │     - core.data_provider.data_provider.save_data
     │   │     - core.feature_engineering.feature_enricher_multi.enrich_multi_interval_features
     │   │     - core.logger.logger.logger
     │   │     - datetime.datetime
     │   │     - datetime.timedelta
+    │   │     - db.postgres_manager.get_all_symbols
     │   │     - db.postgres_manager.run_query
     │   │     - pandas
+    │   │     - pandas_market_calendars
     │   │   Function: get_strategy_config
     │   │   Function: label_from_backtest
     │   │   Function: bootstrap
+    │   ├── bootstrap_precheck.py
+    │   │   Imports:
+    │   │     - core.config.config.settings
+    │   │     - core.data_provider.data_provider.fetch_stock_data
+    │   │     - db.postgres_manager.get_all_symbols
+    │   │     - os
+    │   │     - pandas
+    │   │     - pathlib.Path
+    │   │     - sqlalchemy.create_engine
+    │   │     - sqlalchemy.text
+    │   │   Function: check_model_path
+    │   │   Function: check_database_connection
+    │   │   Function: check_price_history
+    │   │   Function: check_minute_data
+    │   │   Function: check_replay_buffer_table
+    │   │   Function: check_filter_stock_universe
+    │   │   Function: main
     │   ├── bootstrap_trader.py
     │   │   Imports:
     │   │     - agents.execution.execution_agent_sql.ExecutionAgentSQL
+    │   │     - agents.strategy.rl_strategy_agent.RLStrategyAgent
     │   │     - bootstrap.phase_controller.PhaseController
     │   │     - core.logger.logger.logger
     │   │     - core.market_conditions.get_volatility_regime
     │   │     - datetime.datetime
+    │   │     - db.replay_buffer_sql.SQLReplayBuffer
+    │   │     - db.replay_buffer_sql.policy_converged
     │   │     - models.run_stock_filter.run_stock_filter
     │   │     - pandas
     │   │   Function: run_bootstrap_trader
     │   ├── historical_bootstrap_runner.py
     │   │   Imports:
     │   │     - bootstrap.phase_controller.PhaseController
-    │   │     - bootstrap.replay_buffer.ReplayBuffer
     │   │     - bootstrap.simulate_trade_execution.simulate_trade_execution
     │   │     - core.filtering.run_filter.run_filter_model
     │   │     - core.logger.logger.logger
@@ -695,6 +726,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - core.model_trainer.trainer.train_models
     │   │     - datetime.datetime
     │   │     - datetime.timedelta
+    │   │     - db.replay_buffer_sql.SQLReplayBuffer
     │   │     - random
     │   │   Function: run_historical_bootstrap
     │   ├── phase_controller.py
@@ -703,6 +735,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - bootstrap.trade_generator.generate_random_trades
     │   │     - bootstrap.trade_generator.generate_rule_based_trades
     │   │     - core.market_conditions.get_volatility_regime
+    │   │     - db.replay_buffer_sql.policy_converged
     │   │     - random
     │   │   Class: PhaseController
     │   │     Methods:
@@ -737,6 +770,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── simulate_trade_execution.py
     │   │   Imports:
     │   │     - core.data_provider.data_provider.fetch_stock_data
+    │   │     - core.logger.logger.logger
     │   │     - core.realism_boosters.market_impact.estimate_market_impact
     │   │     - core.realism_boosters.slippage.calculate_slippage
     │   │     - datetime.timedelta
@@ -760,7 +794,6 @@ Project Summary for: Y:\Trading\stock_selection
     ├── breaking_the_cold_start_plan.md
     ├── checkpoints
     │   └── ppo.pt
-    ├── completeness_report.csv
     ├── config
     │   ├── paths.py
     │   │   Imports:
@@ -780,6 +813,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - core.config.strategy_config.ExitRule
     │   │     - core.config.strategy_config.StrategyConfig
     │   │     - core.data_provider.data_provider.fetch_stock_data
+    │   │     - datetime.timedelta
     │   │     - pandas
     │   │   Class: SMA_RSI_Exit
     │   │     Methods:
@@ -808,9 +842,14 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     - typing.Optional
     │   │   │     - typing.Tuple
     │   │   │   Class: RetrainConfig
+    │   │   │   Class: StrategyDefaults
+    │   │   │   Class: LoggingConfig
+    │   │   │   Class: TableNames
+    │   │   │   Class: FeatureGroupConfig
     │   │   │   Class: Settings
     │   │   │   Class: Config
     │   │   │   Function: get_feature_columns
+    │   │   │   Function: get_feature_table
     │   │   └── strategy_config.py
     │   │       Imports:
     │   │         - pydantic.BaseModel
@@ -853,10 +892,13 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     - db.db.SessionLocal
     │   │   │     - db.db.engine
     │   │   │     - db.models.Base
+    │   │   │     - db.models.FilterModelPrediction
     │   │   │     - db.models.Instrument
     │   │   │     - db.models.MLSelectedStock
     │   │   │     - db.models.OpenPosition
     │   │   │     - db.models.PaperTrade
+    │   │   │     - db.models.ParamModelPrediction
+    │   │   │     - db.models.PriceModelPrediction
     │   │   │     - db.models.Recommendation
     │   │   │     - db.models.SkiplistStock
     │   │   │     - db.models.StockEncoding
@@ -878,7 +920,6 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │   Function: save_data
     │   │   │   Function: load_data
     │   │   │   Function: get_last_close
-    │   │   │   Function: delete_cached_features
     │   │   │   Function: list_partitions
     │   │   │   Function: ensure_price_table
     │   │   │   Function: cache_price
@@ -1004,26 +1045,21 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   ├── feature_provider.py
     │   │   │   Imports:
     │   │   │     - core.config.config.settings
-    │   │   │     - core.feature_engineering.regime_features.compute_regime_features
-    │   │   │     - core.feature_store.feature_store.get_or_compute
+    │   │   │     - core.data_provider.data_provider.fetch_stock_data
+    │   │   │     - core.data_provider.data_provider.load_data
+    │   │   │     - core.feature_engineering.precompute_features.compute_features
+    │   │   │     - core.feature_engineering.precompute_features.insert_feature_row
     │   │   │     - core.logger.logger.logger
     │   │   │     - core.skiplist.skiplist.is_in_skiplist
+    │   │   │     - datetime.date
     │   │   │     - datetime.datetime
+    │   │   │     - datetime.timedelta
+    │   │   │     - db.db.SessionLocal
     │   │   │     - pandas
+    │   │   │     - sqlalchemy.sql.text
+    │   │   │   Function: process_and_insert
     │   │   │   Function: fetch_features
-    │   │   │     Docstring:
-    │   │   │       Unified interface to fetch features using DuckDB-
-    │   │   │       backed cache.  Args:     stock (str): stock symbol
-    │   │   │       interval (str): time interval (e.g. 'day',
-    │   │   │       '15minute')     refresh_if_missing (bool): whether
-    │   │   │       to compute if missing     start (str or datetime):
-    │   │   │       optional start date     end (str or datetime):
-    │   │   │       optional end date  Returns:     pd.DataFrame with
-    │   │   │       feature rows (can be empty)
     │   │   │   Function: fetch_features_with_backfill
-    │   │   │     Docstring:
-    │   │   │       Backward-compatible fetch with fallback, used in
-    │   │   │       simulation mode.
     │   │   ├── feature_provider_old.py
     │   │   │   Imports:
     │   │   │     - core.config.config.settings
@@ -1031,6 +1067,8 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     - core.data_provider.data_provider.load_data
     │   │   │     - core.feature_engineering.precompute_features.compute_features
     │   │   │     - core.feature_engineering.precompute_features.insert_feature_row
+    │   │   │     - core.feature_engineering.regime_features.compute_regime_features
+    │   │   │     - core.feature_store.feature_store.get_or_compute
     │   │   │     - core.logger.logger.logger
     │   │   │     - core.skiplist.skiplist.is_in_skiplist
     │   │   │     - datetime.datetime
@@ -1083,6 +1121,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── filtering
     │   │   └── run_filter.py
     │   │       Imports:
+    │   │         - core.config.config.settings
     │   │         - core.data_provider.data_provider.load_data
     │   │         - core.logger.logger.logger
     │   │         - datetime.datetime
@@ -1160,6 +1199,12 @@ Project Summary for: Y:\Trading\stock_selection
     │   │       matches base_name prefix.
     │   ├── model_trainer
     │   │   └── trainer.py
+    │   │       Imports:
+    │   │         - core.logger.logger.logger
+    │   │         - db.replay_buffer_sql.load_replay_episodes
+    │   │         - joblib
+    │   │         - lightgbm
+    │   │         - pandas
     │   │       Function: train_models
     │   ├── notifications
     │   │   └── redis_notifier.py
@@ -1248,7 +1293,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │   Function: set_current_allocation
     │   │   ├── ppo_live_policy.py
     │   │   │   Imports:
-    │   │   │     - core.feature_store.feature_store.get_or_compute
+    │   │   │     - core.feature_engineering.feature_provider.fetch_features
     │   │   │     - core.logger.logger.logger
     │   │   │     - numpy
     │   │   │     - pandas
@@ -1321,7 +1366,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── rl
     │   │   ├── gym_env.py
     │   │   │   Imports:
-    │   │   │     - core.feature_store.feature_store.get_or_compute
+    │   │   │     - core.feature_engineering.feature_provider.fetch_features
     │   │   │     - core.logger.logger.logger
     │   │   │     - core.time_context.time_context.get_simulation_date
     │   │   │     - db.postgres_manager.run_query
@@ -1337,6 +1382,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     Methods:
     │   │   │       - __init__
     │   │   │       - _load_events
+    │   │   │       - _infer_observation_space
     │   │   │       - _parse_event
     │   │   │       - reset
     │   │   │       - step
@@ -1364,7 +1410,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │       - load_model
     │   │   └── sql_env.py
     │   │       Imports:
-    │   │         - core.feature_store.feature_store.get_or_compute
+    │   │         - core.feature_engineering.feature_provider.fetch_features
     │   │         - core.logger.logger.logger
     │   │         - core.time_context.time_context.get_simulation_date
     │   │         - db.postgres_manager.run_query
@@ -1380,6 +1426,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │         Methods:
     │   │           - __init__
     │   │           - _load_events
+    │   │           - _infer_observation_space
     │   │           - _parse_event
     │   │           - reset
     │   │           - step
@@ -1453,6 +1500,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── __init__.py
     │   ├── conflict_utils.py
     │   │   Imports:
+    │   │     - core.config.config.settings
     │   │     - db.db.engine
     │   │     - db.models.Base
     │   │     - pandas
@@ -1542,10 +1590,23 @@ Project Summary for: Y:\Trading\stock_selection
     │         - db.postgres_manager.run_query
     │         - json
     │         - pandas
+    │       Class: SQLReplayBuffer
+    │         Methods:
+    │           - __init__
+    │           - add
+    │           - count_real_trades
+    │           - load_all
+    │           - clear
     │       Function: insert_replay_episode
     │       Function: load_replay_episodes
     │       Function: clear_old_episodes
     │       Function: count_by_stock
+    │       Function: policy_converged
+    ├── debug_merge_issue.py
+    │   Imports:
+    │     - core.data_provider.data_provider.load_data
+    │     - core.logger.logger.logger
+    │     - pandas
     ├── diagnosis
     │   ├── clear_all_sql_tables.py
     │   │   Imports:
@@ -1678,7 +1739,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - agents.memory.memory_agent.MemoryAgent
     │   │     - archive.feature_enricher.enrich_features
     │   │     - argparse
-    │   │     - core.backtest_bt.run_backtest
+    │   │     - core.backtest_bt.run_backtest_config
     │   │     - core.config.config.settings
     │   │     - core.data_provider.data_provider.fetch_stock_data
     │   │     - core.data_provider.data_provider.load_data
@@ -1865,32 +1926,6 @@ Project Summary for: Y:\Trading\stock_selection
     │         - prefect.flow
     │       Function: update_rl_rewards_flow
     ├── fundamental_data.csv
-    ├── generate_project_summary.py
-    │   Imports:
-    │     - argparse
-    │     - ast
-    │     - collections.Counter
-    │     - collections.defaultdict
-    │     - hashlib
-    │     - json
-    │     - os
-    │     - re
-    │     - time
-    │   Function: attach_parents
-    │   Function: compute_cyclomatic_complexity
-    │   Function: get_docstring_coverage
-    │   Function: get_missing_docstrings
-    │   Function: hash_file_contents
-    │   Function: get_priority
-    │   Function: infer_category_and_subsystem
-    │   Function: extract_model_names_from_calls
-    │   Function: extract_intervals_and_db_tables
-    │   Function: detect_metrics_used
-    │   Function: scan_project
-    │   Function: main
-    │   Function: extract_data_flow_info
-    │   Function: parse_python_file
-    │   Function: extract_additional_data_signals
     ├── generate_project_summary_txt.py
     │   Imports:
     │     - argparse
@@ -1919,6 +1954,11 @@ Project Summary for: Y:\Trading\stock_selection
     │     - os
     │     - pandas
     │   Function: main
+    ├── inspect_feature_dates.py
+    │   Imports:
+    │     - core.data_provider.data_provider.load_data
+    │     - core.logger.logger.logger
+    │     - pandas
     ├── integrations
     │   ├── __init__.py
     │   ├── drift_detection.py
@@ -1953,6 +1993,7 @@ Project Summary for: Y:\Trading\stock_selection
     │       Function: fetch_historical_data
     │       Function: get_instrument_token
     │       Function: main
+    ├── invalid_instruments.csv
     ├── jobs
     │   └── recheck_expired_skips.py
     │       Imports:
@@ -1970,200 +2011,15 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── failed_fundamentals.csv
     │   ├── history_simulation
     │   │   └── simulate_history_20250503_111707.log
-    │   ├── planner_agent_20250529_140950.log
-    │   ├── planner_agent_20250529_152330.log
-    │   ├── planner_agent_20250530_094950.log
-    │   ├── planner_agent_20250530_095048.log
-    │   ├── planner_agent_20250530_100118.log
-    │   ├── planner_agent_20250530_100640.log
-    │   ├── planner_agent_20250530_100828.log
-    │   ├── planner_agent_20250530_101048.log
-    │   ├── planner_agent_20250530_101119.log
-    │   ├── planner_agent_20250530_101216.log
-    │   ├── planner_agent_20250530_102116.log
-    │   ├── planner_agent_20250530_102249.log
-    │   ├── planner_agent_20250530_102528.log
-    │   ├── planner_agent_20250530_103157.log
-    │   ├── planner_agent_20250530_195346.log
-    │   ├── planner_agent_20250530_200344.log
-    │   ├── planner_agent_20250530_202313.log
-    │   ├── planner_agent_20250530_202606.log
-    │   ├── planner_agent_20250530_203117.log
-    │   ├── planner_agent_20250531_100838.log
-    │   ├── planner_agent_20250531_101430.log
-    │   ├── planner_agent_20250531_101544.log
-    │   ├── planner_agent_20250531_101858.log
-    │   ├── planner_agent_20250531_102303.log
-    │   ├── planner_agent_20250531_102643.log
-    │   ├── planner_agent_20250531_105346.log
-    │   ├── planner_agent_20250531_161705.log
-    │   ├── planner_agent_20250531_162103.log
-    │   ├── planner_agent_20250531_162228.log
-    │   ├── planner_agent_20250531_162548.log
-    │   ├── planner_agent_20250531_162837.log
-    │   ├── planner_agent_20250531_163730.log
-    │   ├── planner_agent_20250531_164027.log
-    │   ├── planner_agent_20250531_230057.log
-    │   ├── planner_agent_20250531_230525.log
-    │   ├── planner_agent_20250531_230924.log
-    │   ├── planner_agent_20250531_232240.log
-    │   ├── planner_agent_20250531_233528.log
-    │   ├── planner_agent_20250531_234018.log
-    │   ├── planner_agent_20250531_234136.log
-    │   ├── planner_agent_20250601_000739.log
-    │   ├── planner_agent_20250601_000900.log
-    │   ├── planner_agent_20250601_001033.log
-    │   ├── planner_agent_20250601_001120.log
-    │   ├── planner_agent_20250601_103146.log
-    │   ├── planner_agent_20250601_183211.log
-    │   ├── planner_agent_20250601_190912.log
-    │   ├── planner_agent_20250601_192245.log
-    │   ├── planner_agent_20250602_141902.log
-    │   ├── planner_agent_20250602_141945.log
-    │   ├── planner_agent_20250602_142059.log
-    │   ├── planner_agent_20250602_142344.log
-    │   ├── planner_agent_20250602_143658.log
-    │   ├── planner_agent_20250602_144045.log
-    │   ├── planner_agent_20250602_144246.log
-    │   ├── planner_agent_20250602_144340.log
-    │   ├── planner_agent_20250602_144421.log
-    │   ├── planner_agent_20250602_144535.log
-    │   ├── planner_agent_20250602_144616.log
-    │   ├── planner_agent_20250602_145252.log
-    │   ├── planner_agent_20250602_145946.log
-    │   ├── planner_agent_20250602_150325.log
-    │   ├── planner_agent_20250602_150341.log
-    │   ├── planner_agent_20250602_150518.log
-    │   ├── planner_agent_20250602_150708.log
-    │   ├── planner_agent_20250602_150720.log
-    │   ├── planner_agent_20250602_151920.log
-    │   ├── planner_agent_20250602_151923.log
-    │   ├── planner_agent_20250602_151929.log
-    │   ├── planner_agent_20250602_172633.log
-    │   ├── planner_agent_20250602_172646.log
-    │   ├── planner_agent_20250602_172653.log
-    │   ├── planner_agent_20250602_172902.log
-    │   ├── planner_agent_20250602_172905.log
-    │   ├── planner_agent_20250602_172911.log
-    │   ├── planner_agent_20250604_144454.log
-    │   ├── planner_agent_20250604_144738.log
-    │   ├── planner_agent_20250604_144857.log
-    │   ├── planner_agent_20250604_144930.log
-    │   ├── planner_agent_20250604_144953.log
-    │   ├── planner_agent_20250604_145010.log
-    │   ├── planner_agent_20250604_145019.log
-    │   ├── planner_agent_20250604_150652.log
-    │   ├── planner_agent_20250604_150657.log
-    │   ├── planner_agent_20250604_150705.log
-    │   ├── planner_agent_20250604_150943.log
-    │   ├── planner_agent_20250604_150948.log
-    │   ├── planner_agent_20250604_150956.log
-    │   ├── planner_agent_20250604_151053.log
-    │   ├── planner_agent_20250604_151058.log
-    │   ├── planner_agent_20250604_151106.log
-    │   ├── planner_agent_20250604_152252.log
-    │   ├── planner_agent_20250604_152257.log
-    │   ├── planner_agent_20250604_152306.log
-    │   ├── planner_agent_20250604_152353.log
-    │   ├── planner_agent_20250604_152357.log
-    │   ├── planner_agent_20250604_152405.log
-    │   ├── planner_agent_20250604_152842.log
-    │   ├── planner_agent_20250604_152847.log
-    │   ├── planner_agent_20250604_152855.log
-    │   ├── planner_agent_20250604_153128.log
-    │   ├── planner_agent_20250604_153133.log
-    │   ├── planner_agent_20250604_153141.log
-    │   ├── planner_agent_20250604_153441.log
-    │   ├── planner_agent_20250604_153445.log
-    │   ├── planner_agent_20250604_153454.log
-    │   ├── planner_agent_20250604_165212.log
-    │   ├── planner_agent_20250604_165217.log
-    │   ├── planner_agent_20250604_165225.log
-    │   ├── planner_agent_20250604_165938.log
-    │   ├── planner_agent_20250604_165942.log
-    │   ├── planner_agent_20250604_165950.log
-    │   ├── planner_agent_20250604_170409.log
-    │   ├── planner_agent_20250604_170414.log
-    │   ├── planner_agent_20250604_170422.log
-    │   ├── planner_agent_20250604_171033.log
-    │   ├── planner_agent_20250604_171038.log
-    │   ├── planner_agent_20250604_171046.log
-    │   ├── planner_agent_20250604_171410.log
-    │   ├── planner_agent_20250604_171414.log
-    │   ├── planner_agent_20250604_171423.log
-    │   ├── planner_agent_20250604_171531.log
-    │   ├── planner_agent_20250604_171657.log
-    │   ├── planner_agent_20250604_172031.log
-    │   ├── planner_agent_20250604_173012.log
-    │   ├── planner_agent_20250604_173019.log
-    │   ├── planner_agent_20250604_173024.log
-    │   ├── planner_agent_20250604_173032.log
-    │   ├── planner_agent_20250604_173312.log
-    │   ├── planner_agent_20250604_173317.log
-    │   ├── planner_agent_20250604_173325.log
-    │   ├── planner_agent_20250604_173916.log
-    │   ├── planner_agent_20250604_173921.log
-    │   ├── planner_agent_20250604_173929.log
-    │   ├── planner_agent_20250604_174218.log
-    │   ├── planner_agent_20250604_174222.log
-    │   ├── planner_agent_20250604_174231.log
-    │   ├── planner_agent_20250604_174329.log
-    │   ├── planner_agent_20250604_174615.log
-    │   ├── planner_agent_20250604_174619.log
-    │   ├── planner_agent_20250604_174628.log
-    │   ├── planner_agent_20250604_175618.log
-    │   ├── planner_agent_20250604_175622.log
-    │   ├── planner_agent_20250604_175631.log
-    │   ├── planner_agent_20250604_180118.log
-    │   ├── planner_agent_20250604_180123.log
-    │   ├── planner_agent_20250604_180131.log
-    │   ├── planner_agent_20250604_180513.log
-    │   ├── planner_agent_20250604_180518.log
-    │   ├── planner_agent_20250604_180526.log
-    │   ├── planner_agent_20250604_180732.log
-    │   ├── planner_agent_20250604_180737.log
-    │   ├── planner_agent_20250604_180745.log
-    │   ├── planner_agent_20250604_181315.log
-    │   ├── planner_agent_20250604_181320.log
-    │   ├── planner_agent_20250604_181745.log
-    │   ├── planner_agent_20250604_181941.log
-    │   ├── planner_agent_20250604_181946.log
-    │   ├── planner_agent_20250604_182053.log
-    │   ├── planner_agent_20250604_182057.log
-    │   ├── planner_agent_20250604_182253.log
-    │   ├── planner_agent_20250604_182258.log
-    │   ├── planner_agent_20250604_182306.log
-    │   ├── planner_agent_20250604_183045.log
-    │   ├── planner_agent_20250604_183049.log
-    │   ├── planner_agent_20250604_183058.log
-    │   ├── planner_agent_20250604_183242.log
-    │   ├── planner_agent_20250604_183247.log
-    │   ├── planner_agent_20250604_183256.log
-    │   ├── planner_agent_20250604_183417.log
-    │   ├── planner_agent_20250604_183422.log
-    │   ├── planner_agent_20250604_183431.log
-    │   ├── planner_agent_20250604_224320.log
-    │   ├── planner_agent_20250604_224342.log
-    │   ├── planner_agent_20250604_224517.log
-    │   ├── planner_agent_20250604_224521.log
-    │   ├── planner_agent_20250604_224530.log
-    │   ├── planner_agent_20250604_224745.log
-    │   ├── planner_agent_20250604_224848.log
-    │   ├── planner_agent_20250604_224857.log
-    │   ├── planner_agent_20250604_224902.log
-    │   ├── planner_agent_20250604_224911.log
-    │   ├── planner_agent_20250604_225226.log
-    │   ├── planner_agent_20250604_225231.log
-    │   ├── planner_agent_20250604_225239.log
-    │   ├── planner_agent_20250604_225528.log
-    │   ├── planner_agent_20250604_225532.log
-    │   ├── planner_agent_20250604_225541.log
-    │   ├── planner_agent_20250604_225727.log
-    │   ├── planner_agent_20250604_225731.log
-    │   ├── planner_agent_20250604_225740.log
-    │   ├── planner_agent_20250604_225825.log
-    │   ├── planner_agent_20250604_225830.log
-    │   ├── planner_agent_20250604_225838.log
+    │   ├── planner_agent_20250608_040331.log
+    │   ├── planner_agent_20250609_002808.log
+    │   ├── planner_agent_20250609_002913.log
+    │   ├── planner_agent_20250609_002957.log
+    │   ├── planner_agent_20250609_004218.log
+    │   ├── planner_agent_20250609_004827.log
+    │   ├── planner_agent_20250609_014858.log
+    │   ├── planner_agent_20250610_011653.log
+    │   ├── planner_agent_20250610_011758.log
     │   └── rl_ppo
     │       ├── PPO_1
     │       │   └── events.out.tfevents.1747647889.MYPC.39688.0
@@ -2187,6 +2043,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │           - reset
     │   │           - step
     │   │           - render
+    │   ├── filter_model.lgb
     │   ├── joint_policy.py
     │   │   Imports:
     │   │     - joblib
@@ -2299,20 +2156,18 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   Function: objective_reg
     │   ├── train_entry_exit_model.py
     │   │   Imports:
+    │   │     - core.config.config.get_feature_columns
+    │   │     - core.config.config.settings
     │   │     - core.data_provider.data_provider.load_data
+    │   │     - core.data_provider.data_provider.save_data
     │   │     - core.feature_engineering.feature_enricher_multi.enrich_multi_interval_features
     │   │     - core.logger.logger.logger
     │   │     - core.model_io.save_model
-    │   │     - json
     │   │     - pandas
-    │   │     - sklearn.ensemble.RandomForestClassifier
     │   │     - sklearn.ensemble.RandomForestRegressor
-    │   │     - sklearn.metrics.classification_report
+    │   │     - sklearn.metrics.mean_squared_error
     │   │     - sklearn.model_selection.train_test_split
-    │   │     - sklearn.multioutput.MultiOutputRegressor
-    │   │     - sklearn.preprocessing.LabelEncoder
-    │   │   Function: parse_exit_config
-    │   │   Function: train_entry_exit_model
+    │   │   Function: train_meta_model
     │   ├── train_exit_model.py
     │   │   Imports:
     │   │     - collections.Counter
@@ -2341,21 +2196,31 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - sklearn.metrics.mean_squared_error
     │   │     - sklearn.model_selection.train_test_split
     │   │   Function: train_meta_model
-    │   └── train_stock_filter_model.py
+    │   ├── train_stock_filter_model.py
+    │   │   Imports:
+    │   │     - core.config.config.settings
+    │   │     - core.data_provider.data_provider.load_data
+    │   │     - core.data_provider.data_provider.save_data
+    │   │     - core.logger.logger.logger
+    │   │     - datetime.datetime
+    │   │     - joblib
+    │   │     - lightgbm
+    │   │     - pandas
+    │   │     - pathlib.Path
+    │   │     - sklearn.metrics.classification_report
+    │   │     - sklearn.metrics.roc_auc_score
+    │   │     - sklearn.model_selection.train_test_split
+    │   │   Function: save_model_and_predictions
+    │   │   Function: train_filter_model
+    │   └── train_strategy_selector.py
     │       Imports:
-    │         - core.data_provider.data_provider.load_data
-    │         - core.data_provider.data_provider.save_data
     │         - core.logger.logger.logger
-    │         - datetime.datetime
-    │         - joblib
-    │         - lightgbm
     │         - pandas
-    │         - random
-    │         - sklearn.metrics.classification_report
-    │         - sklearn.metrics.roc_auc_score
+    │         - pickle
+    │         - sklearn.ensemble.RandomForestRegressor
     │         - sklearn.model_selection.train_test_split
-    │       Function: save_model_and_predictions
-    │       Function: train_filter_model
+    │         - sklearn.multioutput.MultiOutputRegressor
+    │       Function: train_strategy_selector
     ├── odin_banner.txt
     ├── paper_trader.py
     │   Imports:
@@ -2372,8 +2237,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   Function: exit_trades
     │   Function: log_trades
     │   Function: main
-    ├── policy_chooser_deploy.yaml
-    ├── prefect.yaml
+    ├── ppo_buffers
     ├── project_data
     │   ├── archive
     │   ├── logs
@@ -2391,23 +2255,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── secrets
     │   └── trading_system.db
     ├── project_status.md
-    ├── project_summary.json
     ├── project_summary.txt
-    ├── project_vocab.json
-    ├── readme.md
-    ├── report_generator.py
-    │   Imports:
-    │     - core.logger.logger.logger
-    │     - datetime.datetime
-    │     - matplotlib.pyplot
-    │     - os
-    │     - pandas
-    │     - yfinance
-    │   Function: load_data
-    │   Function: analyze_trades
-    │   Function: fetch_current_price
-    │   Function: analyze_open_positions
-    │   Function: main
     ├── reports
     │   ├── daily_snapshot.py
     │   │   Imports:
@@ -2444,7 +2292,6 @@ Project Summary for: Y:\Trading\stock_selection
     ├── requirements-dev.txt
     ├── requirements.txt
     ├── results
-    ├── reward_updater_deploy.yaml
     ├── rl
     │   ├── buffers
     │   │   └── ppo_buffers
@@ -2547,6 +2394,11 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - rl.train_rl_agent.main
     │   │     - sys
     │   └── utils.py
+    ├── run_feature_backfill_test.py
+    │   Imports:
+    │     - core.feature_engineering.feature_provider.fetch_features_with_backfill
+    │     - core.logger.logger.logger
+    │     - datetime.datetime
     ├── scripts
     │   ├── __archive__
     │   │   ├── db_manager.py
@@ -3452,23 +3304,8 @@ Project Summary for: Y:\Trading\stock_selection
     │       Function: get_stock_list
     │         Docstring:
     │           Read back the ML-selected table for downstream use.
-    ├── test_fetch_price.py
-    │   Imports:
-    │     - core.data_provider.data_provider.load_data
-    │     - core.logger.logger.logger
     ├── tracking_progress.md
     ├── tracking_progress_old.md
-    ├── train_joint_policy_flow
-    ├── train_rl_policy_flow
-    ├── train_strategy_selector.py
-    │   Imports:
-    │     - core.logger.logger.logger
-    │     - pandas
-    │     - pickle
-    │     - sklearn.ensemble.RandomForestRegressor
-    │     - sklearn.model_selection.train_test_split
-    │     - sklearn.multioutput.MultiOutputRegressor
-    │   Function: train_strategy_selector
     ├── training
     │   ├── run_ppo_training.py
     │   │   Imports:
@@ -3498,7 +3335,6 @@ Project Summary for: Y:\Trading\stock_selection
     │         - stable_baselines3.common.monitor.Monitor
     │         - stable_baselines3.common.vec_env.DummyVecEnv
     │       Function: make_env
-    ├── training_data.csv
     └── utils
         ├── file_io.py
         │   Imports:
@@ -3526,15 +3362,6 @@ Project Summary for: Y:\Trading\stock_selection
         │     - datetime.datetime
         │     - sqlite3
         │   Function: log_model_progress
-        ├── skiplist_manager.py
-        │   Imports:
-        │     - db.db_router.run_query
-        │     - json
-        │     - os
-        │   Function: load_skiplist
-        │   Function: add_to_skiplist
-        │   Function: load_failed_precheck
-        │   Function: add_failed_precheck
         ├── sql_utils.py
         │   Imports:
         │     - config.sql_tables.SQL_TABLES

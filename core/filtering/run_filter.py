@@ -5,8 +5,9 @@ import pandas as pd
 from models.run_stock_filter import run_stock_filter
 from core.data_provider.data_provider import load_data
 from core.logger.logger import logger
+from core.config.config import settings
 
-PREDICTION_TABLE = "filter_model_predictions"
+PREDICTION_TABLE = settings.tables.predictions["filter"]
 
 def run_filter_model(date: datetime, lookback_only: bool = False) -> list:
     """

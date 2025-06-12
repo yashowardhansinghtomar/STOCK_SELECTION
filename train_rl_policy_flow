@@ -1,4 +1,0 @@
-prefect deploy flows/train_rl_policy_flow.py:train_rl_policy_flow `
-  --name train-rl-policy `
-  --cron "30 23 * * *" `
-  --timezone "Asia/Kolkata"

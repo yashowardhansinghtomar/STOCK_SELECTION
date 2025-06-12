@@ -8,7 +8,7 @@ from core.logger.logger import logger
 from db.models import StockFeatureDay as StockFeature
 from core.time_context.time_context import get_simulation_date
 from core.feature_engineering.feature_enricher_multi import enrich_multi_interval_features
-from core.replay.replay_logger import log_replay_row
+from agents.replay_logger import log_replay_row
 from db.db import SessionLocal
 
 class StrategyAgent:

@@ -25,18 +25,18 @@ class SafeFormatter(logging.Formatter):
             return super().format(record)
 
 # Core logger
-logger = logging.getLogger(settings.logger_name)
-logger.setLevel(getattr(logging, settings.log_level.upper(), logging.INFO))
+logger = logging.getLogger(settings.logging.logger_name)
+logger.setLevel(getattr(logging, settings.logging.log_level.upper(), logging.INFO))
 
 # Console output
 console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(getattr(logging, settings.console_log_level.upper(), logging.INFO))
-console_handler.setFormatter(SafeFormatter(settings.log_format))
+console_handler.setLevel(getattr(logging, settings.logging.console_log_level.upper(), logging.INFO))
+console_handler.setFormatter(SafeFormatter(settings.logging.log_format))
 
 # File output
 file_handler = logging.FileHandler(log_file, encoding="utf-8")
-file_handler.setLevel(getattr(logging, settings.file_log_level.upper(), logging.DEBUG))
-file_handler.setFormatter(SafeFormatter(settings.log_format))
+file_handler.setLevel(getattr(logging, settings.logging.file_log_level.upper(), logging.DEBUG))
+file_handler.setFormatter(SafeFormatter(settings.logging.log_format))
 
 # Attach handlers
 logger.handlers = []

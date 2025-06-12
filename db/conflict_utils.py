@@ -2,20 +2,23 @@ from sqlalchemy.dialects.postgresql import insert
 from db.db import engine
 from db.models import Base
 import pandas as pd
+from core.config.config import settings
 
 # Define per-table conflict handling rules
 CONFLICT_HANDLERS = {
-    "stock_fundamentals": (["stock"], "UPDATE"),
-    "stock_features": (["stock", "date"], "UPDATE"),
-    "stock_price_history": (["symbol", "date", "interval"], "DO NOTHING"),
-    "trades": (["symbol", "timestamp"], "DO NOTHING"),
-    "paper_trades": (["timestamp", "stock", "action"], "DO NOTHING"),
-    "open_positions": (["stock"], "REPLACE"),
-    "model_store": (["model_name"], "UPDATE"),
-    "recommendations": (["stock", "date"], "REPLACE"), 
-    "param_model_predictions": (["date", "stock"], "UPDATE"),
-    "filter_model_predictions": (["date", "stock"], "REPLACE"),
-    "price_model_predictions": (["date", "stock"], "UPDATE"),
+    settings.tables.fundamentals: (["stock"], "UPDATE"),
+    settings.tables.features["day"]: (["stock", "date"], "UPDATE"),
+    settings.tables.features["15minute"]: (["symbol", "date", "interval"], "DO NOTHING"),
+    settings.tables.features["60minute"]: (["symbol", "date", "interval"], "DO NOTHING"),
+    settings.tables.features["minute"]: (["symbol", "date", "interval"], "DO NOTHING"),
+    settings.tables.trades: (["symbol", "timestamp"], "DO NOTHING"),
+    settings.tables.trades: (["timestamp", "stock", "action"], "DO NOTHING"),
+    settings.tables.open_positions: (["stock"], "REPLACE"),
+    settings.tables.model_store: (["model_name"], "UPDATE"),
+    settings.tables.recommendations: (["stock", "date"], "REPLACE"),
+    settings.tables.predictions["filter"]: (["date", "stock"], "REPLACE"),
+    settings.tables.predictions["param"]: (["date", "stock"], "UPDATE"),
+    settings.tables.predictions["price"]: (["date", "stock"], "UPDATE"),
 }
 
 Base.metadata.reflect(bind=engine)

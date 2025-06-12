@@ -15,7 +15,7 @@ def save_model(name: str, model_obj, meta: dict = None) -> None:
     """
     Serialize and save a model to the configured SQL table with optional metadata.
     """
-    table = settings.model_store_table
+    table = settings.tables.model_store
     blob = pickle.dumps(model_obj)
     meta = meta or {}
 
@@ -46,7 +46,7 @@ def load_model(name: str):
     """
     Load a model from the configured SQL table.
     """
-    table = settings.model_store_table
+    table = settings.tables.model_store
     rows = run_query(
         f"SELECT model_blob FROM \"{table}\" WHERE model_name = %s LIMIT 1",
         (name,)
@@ -58,7 +58,7 @@ def load_model(name: str):
 
 def get_model_metadata(name: str):
     rows = run_query(
-        f"SELECT meta FROM \"{settings.model_store_table}\" WHERE model_name = %s LIMIT 1",
+        f"SELECT meta FROM \"{settings.tables.model_store}\" WHERE model_name = %s LIMIT 1",
         (name,)
     )
     return rows[0][0] if rows else {}
@@ -67,7 +67,7 @@ def load_latest_model(base_name: str):
     """
     Loads the most recent model from model_store that matches base_name prefix.
     """
-    df = load_data(settings.model_store_table)
+    df = load_data(settings.tables.model_store)
     if df is None or df.empty:
         raise ValueError("❌ Model store is empty or missing.")
 

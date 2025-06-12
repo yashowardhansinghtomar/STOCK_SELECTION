@@ -1,10 +1,11 @@
 # core/rl/gym_env.py
+
 import gym
 import numpy as np
 import pandas as pd
 from gym import spaces
 from core.logger.logger import logger
-from core.feature_store.feature_store import get_or_compute
+from core.feature_engineering.feature_provider import fetch_features
 from core.time_context.time_context import get_simulation_date
 from db.postgres_manager import run_query
 
@@ -20,8 +21,7 @@ class ODINTradingEnv(gym.Env):
         self.limit = limit
         self.events = self._load_events()
 
-        # Extended for 13 base features + 3 regime vectors
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32)
+        self.observation_space = self._infer_observation_space()
         self.action_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
 
     def _load_events(self):
@@ -40,12 +40,28 @@ class ODINTradingEnv(gym.Env):
             return []
         return df.to_dict(orient="records")
 
+    def _infer_observation_space(self):
+        for row in self.events:
+            df = fetch_features(
+                stock=row["stock"],
+                interval="15minute",
+                refresh_if_missing=True,
+                start=row["date"],
+                end=row["date"]
+            )
+            if df is not None and not df.empty:
+                base = df.drop(columns=["stock", "date", "interval", "regime_tag"], errors="ignore").values[0]
+                obs_shape = len(base) + 3  # +3 for regime vector
+                return spaces.Box(low=-np.inf, high=np.inf, shape=(obs_shape,), dtype=np.float32)
+        logger.warning("[ENV] Could not infer observation shape. Using default (16,).")
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32)
+
     def _parse_event(self, row):
         try:
             symbol = row["stock"]
             date = row["date"]
 
-            # Reward attribution
+            # Reward components
             base_reward = float(row.get("reward", 0.0))
             missed_pnl = float(row.get("missed_pnl", 0.0))
             holding_cost = float(row.get("holding_cost", 0.0))
@@ -53,20 +69,25 @@ class ODINTradingEnv(gym.Env):
             capital_efficiency = float(row.get("capital_efficiency", 0.0))
             reward = base_reward + capital_efficiency - holding_cost - slippage_penalty
 
-            # Load features including regime
-            df = get_or_compute(symbol, interval="15minute", date=date)
+            df = fetch_features(
+                stock=symbol,
+                interval="15minute",
+                refresh_if_missing=True,
+                start=date,
+                end=date
+            )
+
             if df is None or df.empty:
                 obs = np.zeros(self.observation_space.shape)
+                regime = "unknown"
             else:
                 base = df.drop(columns=["stock", "date", "interval", "regime_tag"], errors="ignore").values[0]
-
                 regime = df["regime_tag"].values[0] if "regime_tag" in df.columns else "unknown"
                 regime_vector = {
                     "trending": [1, 0, 0],
                     "volatile": [0, 1, 0],
                     "sideways": [0, 0, 1]
                 }.get(regime, [0, 0, 0])
-
                 obs = np.concatenate([base, regime_vector])
 
             info = {
