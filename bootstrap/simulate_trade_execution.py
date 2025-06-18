@@ -1,6 +1,6 @@
 # bootstrap/simulate_trade_execution.py
 
-from core.data_provider.data_provider import fetch_stock_data
+from core.data_provider.data_provider import fetch_stock_data, get_last_close
 from core.realism_boosters.slippage import calculate_slippage
 from core.realism_boosters.market_impact import estimate_market_impact
 from core.logger.logger import logger
@@ -36,24 +36,32 @@ def simulate_trade_execution(trade, date):
 
             row = bars_df[bars_df["timestamp"] == exe_time]
             if row.empty:
+                # 1️⃣ try the next 5 min
                 window = bars_df[(bars_df["timestamp"] >= exe_time) & (bars_df["timestamp"] <= exe_time + timedelta(minutes=5))]
+                # 2️⃣ then try the prior 30 min
                 if window.empty:
-                    # fallback: look backwards
-                    fallback_window = bars_df[
+                    window = bars_df[
                         (bars_df["timestamp"] < exe_time) &
-                        (bars_df["timestamp"] >= exe_time - timedelta(minutes=15))
+                        (bars_df["timestamp"] >= exe_time - timedelta(minutes=30))
                     ].sort_values("timestamp", ascending=False)
-
-                    if fallback_window.empty:
-                        logger.warning(f"❌ No fallback candle for {trade.symbol} after or before {exe_time}")
+                # 3️⃣ finally use whichever single bar is closest
+                if window.empty:
+                    logger.warning(f"❌ No minute bar for {trade.symbol} around {exe_time}, falling back to daily close.")
+                    daily_close = get_last_close(trade.symbol, date)
+                    if daily_close is None:
+                        logger.warning(f"❌ Daily‐close fallback also failed for {trade.symbol} on {date}")
                         return None
+                    exe_price = daily_close
+                    logger.info(f"⚠ Daily‐close used for {trade.symbol}: {exe_price}")
+                else:
+                    row = window.iloc[0:1]
+                    exe_price = row.iloc[0]["open"]
 
-                    row = fallback_window.iloc[0:1]
-
-            exe_price = row.iloc[0]["open"]
-            slippage = calculate_slippage(trade.symbol, trade.size, date)
-            impact = estimate_market_impact(trade.size, trade.symbol, date)
-            exe_price *= (1 + slippage + impact)
+                # apply slippage & impact if using minute fallback
+                if 'exe_price' in locals() and exe_price != daily_close:
+                    slippage = calculate_slippage(trade.symbol, trade.size, date)
+                    impact   = estimate_market_impact(trade.size, trade.symbol, date)
+                    exe_price *= (1 + slippage + impact)
 
         elif trade.order_type == "LIMIT":
             fill_prob = trade.meta.get("fill_prob", 0.7)
@@ -88,8 +96,20 @@ def simulate_trade_execution(trade, date):
             exit_time = make_naive(trade.exit_time)
             exit_row = exit_bars_df[exit_bars_df["timestamp"] == exit_time]
             if exit_row.empty:
-                logger.warning(f"❌ No exit candle for {trade.symbol} at {exit_time} — using entry price.")
-            exit_price = exe_price if exit_row.empty else exit_row.iloc[0]["close"]
+                logger.warning(f"❌ No exit candle for {trade.symbol} at {exit_time} — trying daily fallback...")
+                try:
+                    daily_exit_close = get_last_close(trade.symbol, exit_time)
+                    if daily_exit_close is not None:
+                        logger.info(f"⚠ Daily‐close used for {trade.symbol} exit: {daily_exit_close}")
+                        exit_price = daily_exit_close
+                    else:
+                        logger.warning(f"❌ Daily close not available — using entry price.")
+                        exit_price = exe_price
+                except Exception as e:
+                    logger.warning(f"❌ Exit fallback failed for {trade.symbol} at {exit_time}: {e} — using entry price.")
+                    exit_price = exe_price
+            else:
+                exit_price = exit_row.iloc[0]["close"]
 
         reward = calculate_reward(entry=exe_price, exit=exit_price, trade=trade)
 

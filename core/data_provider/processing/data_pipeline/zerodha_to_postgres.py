@@ -23,7 +23,7 @@ def load_stock_list():
         if df is None or df.empty:
             raise ValueError("❌ No instruments found via load_data.")
     except Exception as e:
-        logger.warnings(f"⚠️ load_data fallback for instruments: {e}")
+        logger.warning(f"⚠️ load_data fallback for instruments: {e}")
         result = run_query(f"SELECT * FROM {INSTRUMENTS_TABLE}", fetchall=True)
         if not result:
             raise ValueError(f"❌ No instruments found even via fallback.")
@@ -54,7 +54,7 @@ def fetch_and_save_stock(symbol, days=DEFAULT_DAYS):
         df = fetch_historical_data(symbol, days=days, interval="day")
 
         if df is None or df.empty:
-            logger.warnings(f"⚠️ No data fetched for {symbol}. Skipping.")
+            logger.warning(f"⚠️ No data fetched for {symbol}. Skipping.")
             return
 
         df["symbol"] = symbol

@@ -48,7 +48,7 @@ class IntradayPlannerAgent:
     def _fallback_poll(self) -> list:
         df_filtered = load_data(settings.ml_selected_stocks_table)
         if df_filtered is None or df_filtered.empty:
-            logger.warnings("⚠️ No ML-selected stocks in fallback.")
+            logger.warning("⚠️ No ML-selected stocks in fallback.")
             return settings.fallback_stocks
 
         df_filtered = df_filtered[
@@ -95,7 +95,7 @@ class IntradayPlannerAgent:
                 signals.append(final)
 
         if not signals:
-            logger.warnings("❌ No valid intraday signals found.")
+            logger.warning("❌ No valid intraday signals found.")
             return
 
         final_signals = []
@@ -104,7 +104,7 @@ class IntradayPlannerAgent:
                 final_signals.append(sig)
 
         if not final_signals:
-            logger.warnings("⚠️ No signals passed risk checks.")
+            logger.warning("⚠️ No signals passed risk checks.")
             return
 
         df = pd.DataFrame(final_signals).sort_values(by="confidence", ascending=False).head(self.top_n)

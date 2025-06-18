@@ -1,7 +1,7 @@
 # core/execution/trade_execution_helper.py
 from core.broker_api import submit_order_live
 from bootstrap.simulate_trade_execution import simulate_trade_execution
-from db.replay_buffer_sql import insert_replay_episode
+from db.replay_buffer_sql import SQLReplayBuffer
 
 class TradeExecutionHelper:
     def __init__(self, today, dry_run=False, prefix="[EXEC]"):
@@ -36,4 +36,4 @@ class TradeExecutionHelper:
             "strategy_config": strategy_config,
             "done": True
         }
-        insert_replay_episode(episode)
+        SQLReplayBuffer()._insert_episode(episode)

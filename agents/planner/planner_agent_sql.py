@@ -114,7 +114,7 @@ class PlannerAgentSQL:
         logger.info(f"{self.prefix}"+str("📥 Fetching price history for all symbols..."))
         inst = load_data(settings.tables.instruments)
         if inst is None or inst.empty:
-            logger.warnings("⚠️ No instruments found; skipping price fetch.", prefix=self.prefix)
+            logger.warning("⚠️ No instruments found; skipping price fetch.", prefix=self.prefix)
             return
 
         symbols = inst.get("tradingsymbol", inst.get("symbol")).tolist()
@@ -134,12 +134,12 @@ class PlannerAgentSQL:
             try:
                 df_new = fetch_stock_data(symbol=sym, end=self.today, interval=settings.price_fetch_interval, days=1)
                 if df_new is None or df_new.empty:
-                    logger.warnings(f"⚠️ No data for {sym}. Adding to skiplist.", prefix=self.prefix)
+                    logger.warning(f"⚠️ No data for {sym}. Adding to skiplist.", prefix=self.prefix)
                     run_query(f"INSERT INTO {self.skiplist_table}(stock, reason) VALUES (%s, %s) ON CONFLICT DO NOTHING", params=(sym, "no_data"), fetchall=False)
                 else:
                     fetched += 1
             except Exception as e:
-                logger.warnings(f"⚠️ Fetch failed for {sym}: {e}. Adding to skiplist.", prefix=self.prefix)
+                logger.warning(f"⚠️ Fetch failed for {sym}: {e}. Adding to skiplist.", prefix=self.prefix)
                 run_query(f"INSERT INTO {self.skiplist_table}(stock, reason) VALUES (%s, %s) ON CONFLICT DO NOTHING", params=(sym, str(e)), fetchall=False)
 
         logger.success(f"✅ Price fetch complete: {fetched} succeeded.", prefix=self.prefix)
@@ -150,7 +150,7 @@ class PlannerAgentSQL:
             if is_in_skiplist(stock):
                 continue
             if any(p in stock.upper() for p in BAD_PATTERNS):
-                logger.warnings(f"⏩ Skipping {stock} due to bad pattern. Adding to skiplist.", prefix=self.prefix)
+                logger.warning(f"⏩ Skipping {stock} due to bad pattern. Adding to skiplist.", prefix=self.prefix)
                 add_to_skiplist(stock, reason="bad_pattern")
                 continue
             enrich_multi_interval_features(stock=stock, sim_date=self.today, intervals=["day"])
@@ -183,7 +183,7 @@ class PlannerAgentSQL:
                 auto_select_filter()
                 logger.success("✅ Stock filtering complete.", prefix=self.prefix)
             except RuntimeError as e:
-                logger.warnings(f"⚠️ Filter failed: {e}", prefix=self.prefix)
+                logger.warning(f"⚠️ Filter failed: {e}", prefix=self.prefix)
                 return
         else:
             logger.success("📦 Stocks already filtered for today.", prefix=self.prefix)
@@ -194,7 +194,7 @@ class PlannerAgentSQL:
 
         df_filtered = load_data(settings.ml_selected_stocks_table)
         if df_filtered is None or df_filtered.empty:
-            logger.warnings("⚠️ No ML-selected stocks. Using fallback.", prefix=self.prefix)
+            logger.warning("⚠️ No ML-selected stocks. Using fallback.", prefix=self.prefix)
             stocks = settings.fallback_stocks
         else:
             df_filtered = df_filtered[pd.to_datetime(df_filtered["imported_at"]).dt.date == self.today.date()]
@@ -256,7 +256,7 @@ class PlannerAgentSQL:
             insert_with_conflict_handling(df, settings.tables.recommendations)
             logger.success(f"✅ Saved {len(df)} final signals.", prefix=self.prefix)
         else:
-            logger.warnings("❌ No valid signals produced.", prefix=self.prefix)
+            logger.warning("❌ No valid signals produced.", prefix=self.prefix)
 
     def _execute_trades(self):
         logger.info(f"{self.prefix}"+str("💼 Executing trades..."))

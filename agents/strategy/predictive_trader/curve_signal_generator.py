@@ -19,12 +19,12 @@ def generate_signals_from_curves():
 
     df = load_data(CURVE_TABLE)
     if df is None or df.empty:
-        logger.warnings("⚠️ No curve predictions available.")
+        logger.warning("⚠️ No curve predictions available.")
         return
 
     df_today = df[df['timestamp'] == sim_date]
     if df_today.empty:
-        logger.warnings(f"⚠️ No curve predictions for {sim_date}.")
+        logger.warning(f"⚠️ No curve predictions for {sim_date}.")
         return
 
     signals = []
@@ -58,7 +58,7 @@ def generate_signals_from_curves():
         })
 
     if not signals:
-        logger.warnings("⚠️ No actionable signals generated.")
+        logger.warning("⚠️ No actionable signals generated.")
         return
 
     df_signals = pd.DataFrame(signals)
@@ -67,7 +67,7 @@ def generate_signals_from_curves():
     try:
         run_query(f"DELETE FROM {SIGNAL_TABLE} WHERE timestamp = '{sim_date}'")
     except Exception as e:
-        logger.warnings(f"⚠️ Could not delete old signals: {e}")
+        logger.warning(f"⚠️ Could not delete old signals: {e}")
 
     insert_dataframe(df_signals, SIGNAL_TABLE, if_exists="append")
     logger.success(f"✅ {len(df_signals)} new signals saved to {SIGNAL_TABLE}.")

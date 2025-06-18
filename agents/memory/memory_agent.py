@@ -28,7 +28,7 @@ def top_stocks_with_replay_data(min_episodes: int = 30):
             if row.get("count", 0) >= min_episodes
         ]
     except Exception as e:
-        logger.warnings(f"🧠 [MEMORY] ⚠️ Failed to fetch replay buffer counts: {e}")
+        logger.warning(f"🧠 [MEMORY] ⚠️ Failed to fetch replay buffer counts: {e}")
         return []
 
 
@@ -148,7 +148,7 @@ class MemoryAgent:
                 logger.info(f"{self.prefix}🔁 Finetuning RL model: {model_path}")
                 finetune_rl(model_path=model_path, stock=stock, interval=interval, steps=5000)
         except Exception as e:
-            logger.warnings(f"{self.prefix}⚠️ RL finetune failed: {e}")
+            logger.warning(f"{self.prefix}⚠️ RL finetune failed: {e}")
 
         if not retrained:
             logger.info(f"{self.prefix}🔵 No retraining needed.")

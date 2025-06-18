@@ -9,67 +9,67 @@ from core.logger.logger import logger
 from agents.execution.execution_agent_sql import ExecutionAgentSQL
 
 from agents.strategy.rl_strategy_agent import RLStrategyAgent
-from db.replay_buffer_sql import policy_converged
-from db.replay_buffer_sql import SQLReplayBuffer  # ✅ Added import
+from db.replay_buffer_sql import policy_converged, SQLReplayBuffer
 
-
-def run_bootstrap_trader(today=None):
+def run_bootstrap_trader(today=None, phase_controller=None):
+    # Normalize today as a pandas Timestamp (date-only)
     today = pd.to_datetime(today or datetime.now().date())
     logger.info(f"🚨 LIVE BOOTSTRAP TRADER: Running for {today.date()}...")
 
-    session = None  # Add SQLAlchemy session if needed
-    exec_agent = ExecutionAgentSQL(session=session, dry_run=False)
+    # Initialize executor and replay buffer
+    exec_agent    = ExecutionAgentSQL(session=None, dry_run=False)
+    replay_buffer = SQLReplayBuffer()
 
-    # STEP 1: Select stocks
+    # STEP 1: Filter stocks
     filtered_stocks = run_stock_filter(today)
 
-    # STEP 2: Choose planner based on convergence
-    if policy_converged():
-        logger.info("🤖 PPO policy has converged — using RLStrategyAgent for trade generation.")
-        strategy_agent = RLStrategyAgent(today=today)
-        trades = strategy_agent.generate_trades(filtered_stocks)
+    # STEP 2: Advance phase (or init if first call)
+    if not phase_controller:
+        phase_controller = PhaseController(initial_phase=0)
+    phase_controller.update_phase(replay_buffer)
+    real_trades = replay_buffer.count_real_trades()
+    logger.info(f"🔄 Phase {phase_controller.phase} | ε={phase_controller.epsilon:.2f} | Trades={real_trades}")
 
-        # ✅ STEP 2.5: Log PPO trades to SQL replay buffer
-        replay_buffer = SQLReplayBuffer()
-        for trade in trades:
-            if trade.meta.get("source") == "ppo":
-                replay_buffer.add_episode(
-                    stock=trade.symbol,
-                    date=today,
-                    state=trade.meta.get("state"),
-                    action=trade.meta.get("action"),
-                    reward=trade.meta.get("reward"),
-                    next_state=trade.meta.get("next_state"),
-                    done=trade.meta.get("done", False),
+    # STEP 3: Generate trades
+    trades = []
+    if phase_controller.phase >= 2 and policy_converged():
+        logger.info("🤖 Phase ≥2 & PPO converged — using RLStrategyAgent for trades.")
+        # Pass today into the RL agent
+        strategy_agent = RLStrategyAgent(today=today)
+        trades = strategy_agent.generate_trades(filtered_stocks, today)
+        # Log RL signals into the SQL replay buffer
+        for t in trades:
+            if t.get("source") in ("ppo", "rl_agent"):
+                replay_buffer.add(
+                    t,
+                    tags={"phase": phase_controller.phase, "source": t.get("source")}
                 )
     else:
-        logger.info("🧪 PPO not converged — using ε-greedy exploration via PhaseController.")
-        phase_controller = PhaseController(initial_phase=0)
+        logger.info("🧪 Phase <2 — ε-greedy exploration via PhaseController.")
         trades = phase_controller.generate_trades(filtered_stocks, today)
 
-    # STEP 3: Convert to DataFrame format expected by enter_trades
+    # STEP 4: Build the DataFrame of signals for entry_trades
     trade_df = pd.DataFrame([{
-        "symbol": t.symbol,
-        "interval": t.meta.get("interval", "day"),
-        "strategy_config": t.meta.get("strategy_config", {}),
-        "source": t.meta.get("exploration_type", "live_bootstrap"),
-        "sma_short": t.meta.get("sma_short"),
-        "sma_long": t.meta.get("sma_long"),
-        "rsi_thresh": t.meta.get("rsi_thresh"),
-        "confidence": t.meta.get("confidence"),
-        "sharpe": t.meta.get("sharpe"),
-        "rank": t.meta.get("rank"),
-        "trade_triggered": 1
+        "symbol":           t["symbol"],
+        "interval":         t.get("interval", "day"),
+        "strategy_config":  t.get("strategy_config", {}),
+        "source":           t.get("source", "live_bootstrap"),
+        "sma_short":        t.get("sma_short"),
+        "sma_long":         t.get("sma_long"),
+        "rsi_thresh":       t.get("rsi_thresh"),
+        "confidence":       t.get("confidence"),
+        "sharpe":           t.get("sharpe"),
+        "rank":             t.get("rank"),
+        "trade_triggered":  1
     } for t in trades])
 
-    # STEP 4: Load open positions
-    open_pos = exec_agent.load_open_positions()
+    # STEP 5: Execute trades and persist state
+    open_positions = exec_agent.load_open_positions()
+    open_positions = exec_agent.enter_trades(trade_df, open_positions)
+    # exec_agent.run() also handles exits & persistence if you prefer:
+    exec_agent.run()
 
-    # STEP 5: Execute trades via central agent
-    exec_agent.enter_trades(trade_df, open_pos)
-
-    logger.info(f"✅ Live bootstrap trading complete for {today.date()}. {len(trade_df)} trades attempted.")
-
+    logger.info(f"✅ Live bootstrap trading complete for {today.date()}.")
 
 if __name__ == "__main__":
     run_bootstrap_trader()

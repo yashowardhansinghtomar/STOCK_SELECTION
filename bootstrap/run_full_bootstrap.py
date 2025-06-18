@@ -20,6 +20,7 @@ def run_all():
     phase1_end   = "2023-09-30"
 
     logger.info("🚀 Starting FULL BOOTSTRAP SYSTEM flow")
+    
 
     # 0. Skip recommendation generation if already present
     from db.db import SessionLocal
@@ -54,26 +55,42 @@ def run_all():
         logger.info("✅ Filter model already trained.")
 
     # 2. Run historical bootstrap (Phase 0) — trading days only
+    # logger.info("📜 Running historical simulation (Phase 0)...")
+    # for sim_date in get_trading_days(
+    #         datetime.strptime(phase0_start, "%Y-%m-%d"),
+    #         datetime.strptime(phase0_end,   "%Y-%m-%d")
+    #     ):
+    #     try:
+    #         logger.info(f"📅 Simulating Phase 0 day: {sim_date.date()}")
+    #         subprocess.run([
+    #             os.sys.executable, "-m", "bootstrap.run_bootstrap",
+    #             "--start", sim_date.strftime("%Y-%m-%d"),
+    #             "--end", sim_date.strftime("%Y-%m-%d")
+    #         ], check=True)
+    #     except subprocess.CalledProcessError as e:
+    #         logger.warning(f"❌ Phase 0 simulation failed on {sim_date.date()}: {e}")
+    from bootstrap.historical_bootstrap_runner import run_historical_bootstrap
+
     logger.info("📜 Running historical simulation (Phase 0)...")
-    for sim_date in get_trading_days(datetime.strptime(phase0_start, "%Y-%m-%d"), datetime.strptime(phase0_end, "%Y-%m-%d")):
-        try:
-            logger.info(f"📅 Simulating Phase 0 day: {sim_date.date()}")
-            subprocess.run([
-                os.sys.executable, "-m", "bootstrap.run_bootstrap",
-                "--start", sim_date.strftime("%Y-%m-%d"),
-                "--end", sim_date.strftime("%Y-%m-%d")
-            ], check=True)
-        except subprocess.CalledProcessError as e:
-            logger.warning(f"❌ Phase 0 simulation failed on {sim_date.date()}: {e}")
+    run_historical_bootstrap(phase0_start, phase0_end)
+
 
     # 3. Run simulated live bootstrap (Phase 1+) on future dates
     logger.info("🕰️ Simulating live bootstrap Phase 1+ over future dates...")
-    replay_buffer = SQLReplayBuffer()
-    for idx, sim_date in enumerate(get_trading_days(datetime.strptime(phase1_start, "%Y-%m-%d"), datetime.strptime(phase1_end, "%Y-%m-%d"))):
+    from bootstrap.phase_controller import PhaseController
+    replay_buffer     = SQLReplayBuffer()
+    phase_controller  = PhaseController(initial_phase=0)
+
+    for idx, sim_date in enumerate(get_trading_days(
+            datetime.strptime(phase1_start, "%Y-%m-%d"),
+            datetime.strptime(phase1_end,   "%Y-%m-%d")
+        )):
         try:
             logger.info(f"🗓️ Simulating Phase 1+ live day: {sim_date.date()}")
-            run_bootstrap_trader(sim_date)
+            # pass our persistent controller into the trader
+            run_bootstrap_trader(sim_date, phase_controller=phase_controller)
 
+            # after running, you can still inspect convergence if needed
             if policy_converged():
                 logger.info(f"🤖 PPO policy converged by {sim_date.date()}")
             else:

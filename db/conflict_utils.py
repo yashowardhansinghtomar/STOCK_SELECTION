@@ -19,6 +19,8 @@ CONFLICT_HANDLERS = {
     settings.tables.predictions["filter"]: (["date", "stock"], "REPLACE"),
     settings.tables.predictions["param"]: (["date", "stock"], "UPDATE"),
     settings.tables.predictions["price"]: (["date", "stock"], "UPDATE"),
+    settings.tables.price_history: (["symbol", "date", "interval"], "UPDATE"),
+
 }
 
 Base.metadata.reflect(bind=engine)

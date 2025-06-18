@@ -6,7 +6,7 @@ from core.config.config import settings
 
 def predict_param_config(enriched: pd.DataFrame) -> dict:
     if enriched is None or enriched.empty:
-        logger.warnings("⚠️ Empty features passed to param_model.")
+        logger.warning("⚠️ Empty features passed to param_model.")
         return {}
 
     # Determine interval

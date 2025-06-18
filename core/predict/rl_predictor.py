@@ -30,12 +30,12 @@ def load_rl_frame(symbol: str, days: int = 1500, interval: str = "day") -> pd.Da
     end = get_simulation_date()
     price = fetch_stock_data(symbol, end=end, days=days, interval=interval)
     if price is None or price.empty:
-        logger.warnings(f"⚠️ No price data for {symbol} @ {interval}")
+        logger.warning(f"⚠️ No price data for {symbol} @ {interval}")
         return pd.DataFrame()
 
     feats = enrich_multi_interval_features(symbol, end, intervals=[interval])
     if feats.empty:
-        logger.warnings(f"⚠️ No feature data for {symbol} @ {interval}")
+        logger.warning(f"⚠️ No feature data for {symbol} @ {interval}")
         return pd.DataFrame()
 
     df = price.merge(feats, on="date", how="inner").sort_values("date")
@@ -47,12 +47,12 @@ def load_rl_frame(symbol: str, days: int = 1500, interval: str = "day") -> pd.Da
     essential = ["sma_short", "sma_long", "rsi_thresh", "volume_spike", "vwap_dev"]
     missing = [col for col in essential if col not in df.columns]
     if missing:
-        logger.warnings(f"⚠️ {symbol} is missing: {missing} @ {interval}")
+        logger.warning(f"⚠️ {symbol} is missing: {missing} @ {interval}")
     available = [col for col in essential if col in df.columns]
     df = df.dropna(subset=available)
 
     if len(df) < 60:
-        logger.warnings(f"⚠️ {symbol}: only {len(df)} usable rows @ {interval}")
+        logger.warning(f"⚠️ {symbol}: only {len(df)} usable rows @ {interval}")
         return pd.DataFrame()
 
     return df.set_index("date")
@@ -60,14 +60,14 @@ def load_rl_frame(symbol: str, days: int = 1500, interval: str = "day") -> pd.Da
 def predict_action(symbol: str, model_name: str = "rl_policy", interval: str = "day") -> str:
     df = load_rl_frame(symbol, days=1500, interval=interval)
     if df.empty or len(df) < 30:
-        logger.warnings(f"📭 Not enough data to predict RL action for {symbol} @ {interval}")
+        logger.warning(f"📭 Not enough data to predict RL action for {symbol} @ {interval}")
         return "hold"
 
     env = DummyVecEnv([lambda: TradingEnv(df, freq=interval)])
     obs = env.reset()
 
     if not np.all(np.isfinite(obs[0])):
-        logger.warnings(f"🧨 RL obs for {symbol} has NaN or inf: {obs}")
+        logger.warning(f"🧨 RL obs for {symbol} has NaN or inf: {obs}")
         return "hold"
 
     try:
@@ -77,7 +77,7 @@ def predict_action(symbol: str, model_name: str = "rl_policy", interval: str = "
     except Exception:
         try:
             policy = load_policy(model_name)
-            logger.warnings(f"⚠️ Fallback to default policy: {model_name}")
+            logger.warning(f"⚠️ Fallback to default policy: {model_name}")
         except Exception as e:
             logger.error(f"❌ No valid RL policy found for {symbol}: {e}")
             return "hold"
@@ -105,5 +105,5 @@ def predict_with_fallback(symbol: str, model_name: str = "ppo_intraday") -> str:
         except Exception:
             continue
 
-    logger.warnings(f"🪫 RL fallback failed for {symbol}. Returning 'hold'")
+    logger.warning(f"🪫 RL fallback failed for {symbol}. Returning 'hold'")
     return "hold"

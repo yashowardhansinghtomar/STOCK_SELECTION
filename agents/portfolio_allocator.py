@@ -29,7 +29,7 @@ class PortfolioAllocatorAgent:
 
         remaining_budget = self.max_holdings - len(held)
         if remaining_budget <= 0:
-            logger.warnings("Max holdings limit reached. No new positions allowed.", prefix=self.prefix)
+            logger.warning("Max holdings limit reached. No new positions allowed.", prefix=self.prefix)
             return pd.DataFrame()
 
         filtered = []
@@ -49,7 +49,7 @@ class PortfolioAllocatorAgent:
                     current_sector_count = (open_pos["sector"] == sector).sum()
                     max_sector = int(self.max_holdings * self.sector_limits[sector])
                     if current_sector_count >= max_sector:
-                        logger.warnings(f"Sector cap reached for {sector}. Skipping {row['stock']}", prefix=self.prefix)
+                        logger.warning(f"Sector cap reached for {sector}. Skipping {row['stock']}", prefix=self.prefix)
                         continue
 
             filtered.append(row)

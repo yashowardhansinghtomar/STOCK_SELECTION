@@ -98,7 +98,7 @@ def predict_5day_return_v2(ticker, simulation_date=None):
     scaler_path = os.path.join(MODEL_DIR, f"{ticker}_v2_scaler.pkl")
 
     if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-        logger.warnings(f"❗ Model not found for {ticker}, training now...")
+        logger.warning(f"❗ Model not found for {ticker}, training now...")
         trained = train_lstm_model_v2(ticker, simulation_date)
         if not trained:
             return None

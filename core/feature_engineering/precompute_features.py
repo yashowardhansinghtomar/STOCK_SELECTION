@@ -73,12 +73,12 @@ def enrich_and_store(stock: str, interval: str, refresh: bool = False):
     logger.info(f"📊 Computing features for {stock} @ {interval}...")
     df = fetch_stock_data(stock, interval=interval, days=DAYS_LOOKBACK)
     if df is None or df.empty:
-        logger.warnings(f"⚠️ No price data for {stock} @ {interval}")
+        logger.warning(f"⚠️ No price data for {stock} @ {interval}")
         return
 
     df = compute_features(df)
     if df.empty:
-        logger.warnings(f"⚠️ No features computed for {stock} @ {interval}")
+        logger.warning(f"⚠️ No features computed for {stock} @ {interval}")
         return
 
     df["stock"] = stock

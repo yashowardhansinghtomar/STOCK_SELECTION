@@ -9,7 +9,7 @@ from core.logger.logger import logger
 try:
     _, REQUIRED_FEATURES = load_model("filter_model")
 except Exception as e:
-    logger.warnings(f"⚠️ Failed to load filter model for precheck: {e}")
+    logger.warning(f"⚠️ Failed to load filter model for precheck: {e}")
     REQUIRED_FEATURES = []
 
 def is_feature_ready(stock: str, verbose=False) -> bool:

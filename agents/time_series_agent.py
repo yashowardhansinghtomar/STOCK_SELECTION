@@ -16,7 +16,7 @@ from core.logger.logger import logger
 warnings.simplefilter("always")
 
 def warning_to_log(message, category, filename, lineno, file=None, line=None):
-    logger.warnings(f"⚠️ [PYTHON WARNING] {category.__name__}: {message} @ {filename}:{lineno}")
+    logger.warning(f"⚠️ [PYTHON WARNING] {category.__name__}: {message} @ {filename}:{lineno}")
 
 warnings.showwarning = warning_to_log
 
@@ -58,7 +58,7 @@ class TimeSeriesAgent:
 
         hist = pd.to_numeric(hist, errors="coerce").dropna()
         if len(hist) < sum(self.order) + 1:
-            logger.warnings(f"⚠️ TS training skipped for {self.symbol}: insufficient data")
+            logger.warning(f"⚠️ TS training skipped for {self.symbol}: insufficient data")
             return None
 
         logger.debug(f"[DEBUG] Type: {type(hist)}, Columns: {getattr(hist, 'columns', None)}")

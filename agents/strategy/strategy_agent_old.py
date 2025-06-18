@@ -49,7 +49,7 @@ class StrategyAgent:
             self.filter_features = model_obj["features"]
             logger.info(f"✅ Loaded filter model features: {len(self.filter_features)} features")
         except Exception as e:
-            logger.warnings(f"Could not load filter_model features: {e}")
+            logger.warning(f"Could not load filter_model features: {e}")
 
             self.filter_features = []
 
@@ -77,7 +77,7 @@ class StrategyAgent:
                 logger.info(f"🧠 RL policy used successfully for {stock}")
                 return rl_sig
         except Exception as e:
-            logger.warnings(f"⚠️ RL failed for {stock}: {e}")
+            logger.warning(f"⚠️ RL failed for {stock}: {e}")
 
         # ✅ Then ML (Entry/Exit)
         signal = None

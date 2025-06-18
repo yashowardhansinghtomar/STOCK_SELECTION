@@ -53,7 +53,7 @@ def finetune_rl(model_name=None, stock=None, interval=None, steps=5000):
         model = load_model(model_name)
         model = model if isinstance(model, PPO) else model["model"]
     except Exception:
-        logger.warnings(f"⚠️ Fallback to loading base model {model_name.replace('_latest', '')}")
+        logger.warning(f"⚠️ Fallback to loading base model {model_name.replace('_latest', '')}")
         model = PPO.load(model_name.replace("_latest", ""))
 
     model.set_env(env)

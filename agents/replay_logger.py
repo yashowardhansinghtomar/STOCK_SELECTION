@@ -2,7 +2,7 @@
 
 from core.event_bus import subscribe_to_events
 from db.db import SessionLocal
-from db.replay_buffer_sql import insert_replay_episode
+from db.replay_buffer_sql import SQLReplayBuffer
 from core.logger.logger import logger
 import pandas as pd
 
@@ -31,15 +31,20 @@ def handle_event(event):
             "regime_tag": event.get("regime_tag"),
         }
 
+        # ✅ Fix: convert to JSON strings
+        episode["features"] = json.dumps(episode.get("features", {}))
+        episode["strategy_config"] = json.dumps(episode.get("strategy_config", {}))
+
         logger.info(
             f"[REPLAY LOGGER] {episode['stock']} | reward: {episode['reward']:.2f} | "
             f"missed: {episode['missed_pnl']:.2f}, hold: {episode['holding_cost']:.2f}, "
             f"slip: {episode['slippage_penalty']:.2f}, eff: {episode['capital_efficiency']:.2f}"
         )
-        insert_replay_episode(episode)
+        SQLReplayBuffer()._insert_episode(episode)
 
     except Exception as e:
         logger.error(f"[REPLAY LOGGER] ⚠️ Failed to insert replay episode: {e}")
+
 
 def log_replay_row(stock, action, reason, model=None, prediction=None, confidence=None, signal=None, date=None):
     """

@@ -32,7 +32,7 @@ def main(args):
         try:
             valid_envs.append(make_env(sym, freq))
         except Exception as e:
-            logger.warnings(f"⚠️ Skipping {sym}: {e}")
+            logger.warning(f"⚠️ Skipping {sym}: {e}")
             skipped.append(sym)
 
     if not valid_envs:

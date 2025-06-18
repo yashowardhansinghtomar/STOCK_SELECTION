@@ -41,4 +41,4 @@ def ensure_price_history_prefilled(current_date=None, silent=False, stock_list=N
                 if not silent:
                     logger.info(f"💾 Prefilled price history for {stock}")
         except Exception as e:
-            logger.warnings(f"⚠️ Failed to prefill price for {stock}: {e}")
+            logger.warning(f"⚠️ Failed to prefill price for {stock}: {e}")

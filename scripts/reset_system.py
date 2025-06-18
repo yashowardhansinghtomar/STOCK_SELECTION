@@ -30,7 +30,7 @@ def drop_partitioned_feature_tables():
             run_query(f'DROP TABLE IF EXISTS \"{t}\"', fetchall=False)
             logger.info(f"🗑️ Dropped: {t}")
     except Exception as e:
-        logger.warnings(f"⚠️ Failed to drop partitioned tables: {e}")
+        logger.warning(f"⚠️ Failed to drop partitioned tables: {e}")
 
 def delete_model_files():
     model_dir = Path("project_data/models")
@@ -67,7 +67,7 @@ def main():
             run_query(f'TRUNCATE TABLE \"{table}\" RESTART IDENTITY', fetchall=False)
             logger.info(f"✅ Cleared: {table}")
         except Exception as e:
-            logger.warnings(f"⚠️ Failed to truncate {table}: {e}")
+            logger.warning(f"⚠️ Failed to truncate {table}: {e}")
 
     drop_partitioned_feature_tables()
     delete_model_files()

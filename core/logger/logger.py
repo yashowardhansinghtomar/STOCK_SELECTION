@@ -28,6 +28,9 @@ class SafeFormatter(logging.Formatter):
 logger = logging.getLogger(settings.logging.logger_name)
 logger.setLevel(getattr(logging, settings.logging.log_level.upper(), logging.INFO))
 
+# ── Preserve the real warning method before we override it ────────────────
+_orig_logger_warning = logger.warning
+
 # Console output
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setLevel(getattr(logging, settings.logging.console_log_level.upper(), logging.INFO))
@@ -48,7 +51,8 @@ def success(msg, prefix=""):
     logger.info(f"{prefix}✅ {strip_surrogates(msg)}")
 
 def warnings(msg, prefix=""):
-    logger.warning(f"{prefix}⚠️ {strip_surrogates(msg)}")
+    # delegate to the preserved original warning() to avoid recursion
+    _orig_logger_warning(f"{prefix}⚠️ {strip_surrogates(msg)}")
 
 def errors(msg, prefix=""):
     logger.error(f"{prefix}❌ {strip_surrogates(msg)}")
@@ -56,8 +60,8 @@ def errors(msg, prefix=""):
 def start(msg, prefix=""):
     logger.info(f"{prefix}🚀 {strip_surrogates(msg)}")
 
-# Attach custom methods
+# Attach custom methods (override logger.warning with our safe wrapper)
 logger.success = success
-logger.warnings = warnings
+logger.warning = warnings
 logger.errors = errors
 logger.start = start

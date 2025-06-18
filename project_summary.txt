@@ -44,7 +44,7 @@ Project Summary for: Y:\Trading\stock_selection
 • core\system_state.py → load_data(settings.tables.open_positions, source_dest=default)
 • core\system_state.py → load_data(table, source_dest=default)
 • core\data_provider\data_provider.py → save_data(df, source_dest=default)
-• core\data_provider\data_provider.py → save_data(df_1m, source_dest=default)
+• core\data_provider\data_provider.py → save_data(df, source_dest=default)
 • core\data_provider\data_provider.py → save_data(down, source_dest=default)
 • core\data_provider\fundamentals\fundamental_data_extractor.py → load_data(TABLE_NAME, source_dest=default)
 • core\data_provider\fundamentals\fundamental_data_extractor.py → save_data(df, source_dest=default)
@@ -110,8 +110,7 @@ Project Summary for: Y:\Trading\stock_selection
     ├── RL_bootstrap_notes.md
     ├── aaa.py
     │   Imports:
-    │     - core.data_provider.data_provider.get_last_close
-    │     - datetime.datetime
+    │     - core.data_provider.data_provider.fetch_stock_data
     ├── aab.py
     │   Imports:
     │     - argparse
@@ -181,7 +180,6 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     - db.conflict_utils.insert_with_conflict_handling
     │   │   │     - db.postgres_manager.run_query
     │   │   │     - db.replay_buffer_sql.SQLReplayBuffer
-    │   │   │     - db.replay_buffer_sql.insert_replay_episode
     │   │   │     - json
     │   │   │     - os
     │   │   │     - pandas
@@ -202,7 +200,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │       Imports:
     │   │         - bootstrap.simulate_trade_execution.simulate_trade_execution
     │   │         - core.broker_api.submit_order_live
-    │   │         - db.replay_buffer_sql.insert_replay_episode
+    │   │         - db.replay_buffer_sql.SQLReplayBuffer
     │   │       Class: TradeExecutionHelper
     │   │         Methods:
     │   │           - __init__
@@ -217,7 +215,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   Imports:
     │   │     - core.event_bus.subscribe_to_events
     │   │     - core.logger.logger.logger
-    │   │     - db.replay_buffer_sql.insert_replay_episode
+    │   │     - db.replay_buffer_sql.SQLReplayBuffer
     │   │   Function: handle_trade_close
     │   ├── joint_policy_runner.py
     │   │   Imports:
@@ -396,7 +394,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - core.logger.logger.logger
     │   │     - db.db.SessionLocal
     │   │     - db.postgres_manager.run_query
-    │   │     - db.replay_buffer_sql.insert_replay_episode
+    │   │     - db.replay_buffer_sql.SQLReplayBuffer
     │   │     - pandas
     │   │   Function: handle_event
     │   │   Function: log_replay_row
@@ -585,6 +583,12 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │       - __init__
     │   │   │       - _evaluate_reward
     │   │   │       - evaluate
+    │   │   │       - generate_trades
+    │   │   │         Docstring:
+    │   │   │           Wrapper to produce a list of RL signals
+    │   │   │           for bootstrap_trader. Calls evaluate()
+    │   │   │           for each stock and returns only the non-
+    │   │   │           None signals.
     │   │   ├── strategy_agent.py
     │   │   │   Imports:
     │   │   │     - agents.replay_logger.log_replay_row
@@ -683,6 +687,8 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - db.postgres_manager.run_query
     │   │     - pandas
     │   │     - pandas_market_calendars
+    │   │     - traceback
+    │   │     - utils.time_utils.make_naive
     │   │   Function: get_strategy_config
     │   │   Function: label_from_backtest
     │   │   Function: bootstrap
@@ -718,15 +724,18 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   Function: run_bootstrap_trader
     │   ├── historical_bootstrap_runner.py
     │   │   Imports:
+    │   │     - agents.execution.execution_agent_sql.ExecutionAgentSQL
     │   │     - bootstrap.phase_controller.PhaseController
     │   │     - bootstrap.simulate_trade_execution.simulate_trade_execution
-    │   │     - core.filtering.run_filter.run_filter_model
+    │   │     - core.config.config.settings
     │   │     - core.logger.logger.logger
     │   │     - core.market_calendar.get_trading_days
     │   │     - core.model_trainer.trainer.train_models
     │   │     - datetime.datetime
-    │   │     - datetime.timedelta
     │   │     - db.replay_buffer_sql.SQLReplayBuffer
+    │   │     - models.run_stock_filter.run_stock_filter
+    │   │     - numpy
+    │   │     - pandas
     │   │     - random
     │   │   Function: run_historical_bootstrap
     │   ├── phase_controller.py
@@ -758,32 +767,54 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   Imports:
     │   │     - argparse
     │   │     - bootstrap.historical_bootstrap_runner.run_historical_bootstrap
+    │   │     - core.data_provider.data_provider.fetch_stock_data
+    │   │     - core.logger.logger.logger
+    │   │     - core.market_calendar.is_market_holiday
+    │   │     - datetime.datetime
+    │   │     - db.db.SessionLocal
+    │   │     - db.models.FilterModelPrediction
+    │   │   Function: prefetch_minute_bars
     │   │   Function: main
     │   ├── run_full_bootstrap.py
     │   │   Imports:
     │   │     - bootstrap.bootstrap_trader.run_bootstrap_trader
+    │   │     - bootstrap.phase_controller.PhaseController
     │   │     - bootstrap.run_bootstrap.main
     │   │     - core.logger.logger.logger
+    │   │     - core.market_calendar.get_trading_days
+    │   │     - core.model_trainer.trainer.train_models
+    │   │     - datetime.datetime
+    │   │     - db.db.SessionLocal
+    │   │     - db.models.Recommendation
+    │   │     - db.replay_buffer_sql.SQLReplayBuffer
+    │   │     - db.replay_buffer_sql.policy_converged
     │   │     - os
     │   │     - subprocess
     │   │   Function: run_all
+    │   │   Function: recommendations_exist
     │   ├── simulate_trade_execution.py
     │   │   Imports:
     │   │     - core.data_provider.data_provider.fetch_stock_data
     │   │     - core.logger.logger.logger
     │   │     - core.realism_boosters.market_impact.estimate_market_impact
     │   │     - core.realism_boosters.slippage.calculate_slippage
+    │   │     - datetime.datetime
     │   │     - datetime.timedelta
+    │   │     - pandas
     │   │     - random
+    │   │     - utils.time_utils.make_naive
+    │   │     - utils.time_utils.to_naive_utc
     │   │   Function: simulate_trade_execution
     │   │   Function: calculate_reward
     │   └── trade_generator.py
     │       Imports:
+    │         - core.data_provider.data_provider.fetch_stock_data
     │         - core.data_provider.data_provider.get_last_close
     │         - core.logger.logger.logger
     │         - datetime.datetime
     │         - datetime.timedelta
     │         - random
+    │         - utils.time_utils.make_naive
     │       Class: Trade
     │         Methods:
     │           - __init__
@@ -815,6 +846,10 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - core.data_provider.data_provider.fetch_stock_data
     │   │     - datetime.timedelta
     │   │     - pandas
+    │   │     - traceback
+    │   │     - utils.time_utils.make_naive
+    │   │     - utils.time_utils.make_naive_index
+    │   │     - utils.time_utils.to_naive_utc
     │   │   Class: SMA_RSI_Exit
     │   │     Methods:
     │   │       - init
@@ -884,6 +919,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   ├── data_provider.py
     │   │   │   Imports:
     │   │   │     - core.config.config.settings
+    │   │   │     - core.data_provider.data_provider.fetch_stock_data
     │   │   │     - core.data_provider.downsample.downsample_ohlcv
     │   │   │     - core.logger.logger.logger
     │   │   │     - datetime.datetime
@@ -908,6 +944,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     - db.models.StockFeatureDay
     │   │   │     - db.models.StockFundamental
     │   │   │     - db.models.StockPriceHistory
+    │   │   │     - integrations.zerodha_fetcher.MINIMUM_START_DATE
     │   │   │     - integrations.zerodha_fetcher.fetch_historical_data
     │   │   │     - pandas
     │   │   │     - pytz.timezone
@@ -915,7 +952,12 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   │     - typing.Any
     │   │   │     - typing.List
     │   │   │     - typing.Optional
+    │   │   │     - utils.time_utils.ensure_df_naive_utc
+    │   │   │     - utils.time_utils.make_naive
+    │   │   │     - utils.time_utils.make_naive_index
+    │   │   │     - utils.time_utils.to_naive_datetime
     │   │   │     - utils.time_utils.to_naive_utc
+    │   │   │   Function: log_once
     │   │   │   Function: fetch_stock_data
     │   │   │   Function: save_data
     │   │   │   Function: load_data
@@ -1164,11 +1206,13 @@ Project Summary for: Y:\Trading\stock_selection
     │   │       Function: log_event
     │   ├── market_calendar.py
     │   │   Imports:
+    │   │     - datetime.datetime
     │   │     - datetime.timedelta
     │   │   Function: get_trading_days
     │   │     Docstring:
     │   │       Returns all weekdays (Mon-Fri) between start and end
     │   │       dates, inclusive.
+    │   │   Function: is_market_holiday
     │   ├── market_conditions.py
     │   │   Imports:
     │   │     - core.data_provider.data_provider.fetch_stock_data
@@ -1544,6 +1588,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - sqlalchemy.TIMESTAMP
     │   │     - sqlalchemy.dialects.postgresql.JSONB
     │   │     - sqlalchemy.orm.declarative_base
+    │   │     - sqlalchemy.text
     │   │   Class: Instrument
     │   │   Class: SkiplistStock
     │   │   Class: StockPriceHistory
@@ -1593,15 +1638,48 @@ Project Summary for: Y:\Trading\stock_selection
     │       Class: SQLReplayBuffer
     │         Methods:
     │           - __init__
+    │           - _insert_episode
+    │             Docstring:
+    │               Internal helper to insert a replay episode.
     │           - add
+    │             Docstring:
+    │               Historical bootstrap: merge trade_result.meta
+    │               + tags into features JSON.
+    │           - add_episode
+    │             Docstring:
+    │               Live bootstrap: record state, next_state,
+    │               done + optional tags.
     │           - count_real_trades
+    │             Docstring:
+    │               Return count of episodes where reward IS NOT
+    │               NULL.
+    │           - size
+    │             Docstring:
+    │               Return total number of episodes.
     │           - load_all
+    │             Docstring:
+    │               Load all episodes, ordered by date and
+    │               insertion time.
     │           - clear
+    │             Docstring:
+    │               Remove all episodes.
+    │           - clear_old_episodes
+    │             Docstring:
+    │               Delete episodes older than `days` days.
     │       Function: insert_replay_episode
+    │         Docstring:
+    │           Convenience alias for SQLReplayBuffer._insert_episode.
     │       Function: load_replay_episodes
-    │       Function: clear_old_episodes
+    │         Docstring:
+    │           Load replay episodes, optionally filtering by stock
+    │           and/or interval.
     │       Function: count_by_stock
+    │         Docstring:
+    │           Return DataFrame of episode counts grouped by stock.
     │       Function: policy_converged
+    │         Docstring:
+    │           Determine if policy has converged based on recent
+    │           rewards.
     ├── debug_merge_issue.py
     │   Imports:
     │     - core.data_provider.data_provider.load_data
@@ -1723,6 +1801,7 @@ Project Summary for: Y:\Trading\stock_selection
     │       Function: load_actual_prices
     │       Function: evaluate_model
     ├── docker-compose.yml
+    ├── fast_bootstrap_data_report.csv
     ├── flows
     │   ├── attribution_flow.py
     │   │   Imports:
@@ -1844,7 +1923,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │   Imports:
     │   │     - core.event_bus.subscribe_to_events
     │   │     - core.logger.logger.logger
-    │   │     - db.replay_buffer_sql.insert_replay_episode
+    │   │     - db.replay_buffer_sql.SQLReplayBuffer
     │   │     - prefect.flow
     │   │   Function: handle_trade_close
     │   │   Function: feedback_logger_flow
@@ -1959,6 +2038,15 @@ Project Summary for: Y:\Trading\stock_selection
     │     - core.data_provider.data_provider.load_data
     │     - core.logger.logger.logger
     │     - pandas
+    ├── inspection
+    │   └── check_bootstrap_data.py
+    │       Imports:
+    │         - datetime.datetime
+    │         - datetime.timedelta
+    │         - pandas
+    │         - sqlalchemy.create_engine
+    │         - tqdm.tqdm
+    │       Function: fetch_table
     ├── integrations
     │   ├── __init__.py
     │   ├── drift_detection.py
@@ -2017,9 +2105,30 @@ Project Summary for: Y:\Trading\stock_selection
     │   ├── planner_agent_20250609_002957.log
     │   ├── planner_agent_20250609_004218.log
     │   ├── planner_agent_20250609_004827.log
-    │   ├── planner_agent_20250609_014858.log
-    │   ├── planner_agent_20250610_011653.log
-    │   ├── planner_agent_20250610_011758.log
+    │   ├── planner_agent_20250611_003430.log
+    │   ├── planner_agent_20250611_003641.log
+    │   ├── planner_agent_20250611_003649.log
+    │   ├── planner_agent_20250611_003748.log
+    │   ├── planner_agent_20250611_003756.log
+    │   ├── planner_agent_20250611_030839.log
+    │   ├── planner_agent_20250611_042454.log
+    │   ├── planner_agent_20250611_173547.log
+    │   ├── planner_agent_20250611_173728.log
+    │   ├── planner_agent_20250613_035748.log
+    │   ├── planner_agent_20250613_035819.log
+    │   ├── planner_agent_20250613_035822.log
+    │   ├── planner_agent_20250613_035912.log
+    │   ├── planner_agent_20250613_050844.log
+    │   ├── planner_agent_20250613_050901.log
+    │   ├── planner_agent_20250613_051432.log
+    │   ├── planner_agent_20250613_051441.log
+    │   ├── planner_agent_20250613_051818.log
+    │   ├── planner_agent_20250613_051826.log
+    │   ├── planner_agent_20250613_052254.log
+    │   ├── planner_agent_20250613_052302.log
+    │   ├── planner_agent_20250613_052404.log
+    │   ├── planner_agent_20250613_052412.log
+    │   ├── planner_agent_20250613_052415.log
     │   └── rl_ppo
     │       ├── PPO_1
     │       │   └── events.out.tfevents.1747647889.MYPC.39688.0
@@ -2131,6 +2240,7 @@ Project Summary for: Y:\Trading\stock_selection
     │   │     - core.data_provider.data_provider.save_data
     │   │     - core.logger.logger.logger
     │   │     - datetime.datetime
+    │   │     - datetime.timedelta
     │   │     - db.postgres_manager.run_query
     │   │     - joblib
     │   │     - lightgbm
@@ -2257,6 +2367,15 @@ Project Summary for: Y:\Trading\stock_selection
     ├── project_status.md
     ├── project_summary.txt
     ├── reports
+    │   ├── analyze_selected_stocks.py
+    │   │   Imports:
+    │   │     - core.config.config.settings
+    │   │     - pandas
+    │   │     - sqlalchemy.create_engine
+    │   ├── check_replay_stats.py
+    │   │   Imports:
+    │   │     - pandas
+    │   │     - sqlalchemy.create_engine
     │   ├── daily_snapshot.py
     │   │   Imports:
     │   │     - core.config.config.settings
@@ -3236,6 +3355,7 @@ Project Summary for: Y:\Trading\stock_selection
     │         - pandas
     │       Function: get_recent_dates
     │       Function: validate_duckdb_cache
+    ├── selected_stock_summary.csv
     ├── services
     │   └── exit_policy_evaluator.py
     │       Imports:
@@ -3336,6 +3456,8 @@ Project Summary for: Y:\Trading\stock_selection
     │         - stable_baselines3.common.vec_env.DummyVecEnv
     │       Function: make_env
     └── utils
+        ├── cache.py
+        │   Function: is_skipped
         ├── file_io.py
         │   Imports:
         │     - core.logger.logger.logger
@@ -3386,6 +3508,7 @@ Project Summary for: Y:\Trading\stock_selection
         │   Function: compute_rsi
         └── time_utils.py
             Imports:
+              - datetime.datetime
               - pandas
               - pytz.timezone
             Function: to_naive_utc
@@ -3393,3 +3516,13 @@ Project Summary for: Y:\Trading\stock_selection
               Docstring:
                 Converts datetime column to IST (timezone-aware).
             Function: localize_if_needed
+            Function: make_naive
+              Docstring:
+                Converts a single datetime to naive UTC.
+            Function: ensure_df_naive_utc
+            Function: assert_naive
+            Function: make_naive_index
+              Docstring:
+                Forces a datetime index to be offset-naive.
+            Function: to_naive_utc_timestamp
+            Function: to_naive_datetime

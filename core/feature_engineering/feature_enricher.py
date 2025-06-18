@@ -27,7 +27,7 @@ def enrich_features(stock: str, sim_date: datetime, interval: str = "day") -> pd
         result = session.execute(sql, {"stock": stock, "sim_date": sim_date}).fetchall()
 
         if not result:
-            logger.warnings(f"⚠️ No features for {stock} on {sim_date} @ {interval}.")
+            logger.warning(f"⚠️ No features for {stock} on {sim_date} @ {interval}.")
             return pd.DataFrame()
 
         row = dict(result[0]._mapping)
@@ -35,11 +35,11 @@ def enrich_features(stock: str, sim_date: datetime, interval: str = "day") -> pd
         df = to_naive_utc(df, "date")
 
         if any(pd.isnull(df.get(k)).any() for k in ["sma_short", "sma_long", "rsi_thresh"]):
-            logger.warnings(f"⚠️ {stock} has NaN in key features. Skipping.")
+            logger.warning(f"⚠️ {stock} has NaN in key features. Skipping.")
             return pd.DataFrame()
 
         if df.at[0, "sma_short"] == df.at[0, "sma_long"] or df.at[0, "rsi_thresh"] > 100:
-            logger.warnings(f"⚠️ {stock} has suspicious features. Skipping.")
+            logger.warning(f"⚠️ {stock} has suspicious features. Skipping.")
             return pd.DataFrame()
 
         logger.info(f"✅ Features ready for {stock} on {sim_date} @ {interval}")

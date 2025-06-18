@@ -61,7 +61,7 @@ def run_stock_filter(
     3) Persist only 'stock' (+ timestamp) back to SQL
     """
     if not settings.use_fundamentals:
-        logger.warnings("⚠️ use_fundamentals=False — skipping filter.")
+        logger.warning("⚠️ use_fundamentals=False — skipping filter.")
         return pd.DataFrame()
     sim_date = pd.to_datetime(get_simulation_date()).normalize()
     df = load_data(settings.fundamentals_table)
@@ -69,7 +69,7 @@ def run_stock_filter(
         df["imported_at"] = pd.to_datetime(df["imported_at"]).dt.normalize()
         df = df[df["imported_at"] <= sim_date]
     if df is None or df.empty:
-        logger.warnings("⚠️ No fundamental data found in SQL.")
+        logger.warning("⚠️ No fundamental data found in SQL.")
         return pd.DataFrame()
 
     logger.info(f"Loaded {len(df)} rows from '{settings.fundamentals_table}'")
@@ -97,7 +97,7 @@ def run_stock_filter(
 
     filtered = filters[filter_name](df)
     if filtered.empty:
-        logger.warnings(f"⚠️ Filter '{filter_name}' returned no rows.")
+        logger.warning(f"⚠️ Filter '{filter_name}' returned no rows.")
         return filtered
 
     # Build a slim output DF for SQL

@@ -8,6 +8,7 @@ import pandas as pd
 from db.models import Base
 from sqlalchemy import inspect
 from db.db import engine
+from utils.time_utils import to_naive_datetime
 
 from core.logger.logger import logger
 from core.config.config import settings
@@ -137,12 +138,37 @@ def fetch_stock_data(symbol: str, start: str = None, end: str = None, interval: 
     logger.info(f"📡 Fetching historical data for {symbol} ({start.date()} → {end.date()})")
     df = fetch_historical_data(symbol, start=start, end=end, interval="minute")
     if df is not None and not df.empty:
-        # 🚨 Check if fake "minute" data is actually a daily candle
-        if (
+        is_fake_minute = (
+            df is not None and
             df.shape[0] == 1 and
             pd.to_datetime(df["date"].iloc[0]).time() == datetime.strptime("18:30", "%H:%M").time()
-        ):
-            logger.warning(f"⚠ {symbol} returned only 1 row with 18:30 candle — likely fallback daily bar mislabeled as minute. Saving anyway.")
+        )
+
+        if is_fake_minute:
+            logger.warning(f"⚠ {symbol} returned only 1 row with 18:30 candle — likely fallback daily bar. Saving as 'day'.")
+            df["interval"] = "day"
+            save_data(df, settings.tables.price_history)
+            return fetch_stock_data(symbol, start=start, end=end, interval="day")  # 🔁 re-fetch as proper daily
+
+    if (
+        df is not None and not df.empty and
+        normalized_interval == "minute" and
+        df.shape[0] == 1 and
+        pd.to_datetime(df["date"].iloc[0]).time() == datetime.strptime("18:30", "%H:%M").time()
+    ):
+
+        logger.warning(f"⚠️ {symbol} returned only 1 row with 18:30 candle — likely fallback daily bar. Saving as 'day'.")
+
+        # ✅ Correct interval and timestamp
+        df["interval"] = "day"
+        df["date"] = pd.to_datetime(df["date"]).dt.floor("D")
+        df.set_index("date", inplace=True)
+        df = df[~df.index.duplicated(keep="last")]
+
+        # ✅ Save cleanly as day-level data
+        save_data(df, settings.tables.price_history)
+        return df  # or return fetch_stock_data(..., interval="day") if you want to retry properly
+
 
     if df is not None and not df.empty:
         df["interval"] = "minute"
@@ -267,47 +293,89 @@ def load_data(table_name: str, interval: str = None, stock: str = None, start: s
     finally:
         session.close()
 
-from utils.time_utils import to_naive_datetime
+
 
 def get_last_close(symbol: str, sim_date: datetime = None) -> Optional[float]:
     try:
         sim_date = pd.to_datetime(sim_date or datetime.now()).normalize()
         logger.debug(f"🧪 get_last_close: {symbol} as of {sim_date} | tzinfo: {sim_date.tzinfo}")
 
-        # Step 1: Try 1-minute bars
-        df_1m = fetch_stock_data(symbol, interval="1m", end=sim_date + timedelta(days=1), days=1)
-        if df_1m is not None and not df_1m.empty:
-            df_1m = df_1m.reset_index() if df_1m.index.name else df_1m
-            if "date" in df_1m.columns:
-                df_1m = df_1m.rename(columns={"date": "timestamp"})
-            df_1m["timestamp"] = pd.to_datetime(df_1m["timestamp"]).dt.tz_localize(None)
-            df_1m["date_only"] = df_1m["timestamp"].dt.normalize()
+        # Step 1: Try 1-minute bars with expanding lookback
+        minute_lookback = 1
+        max_minute_lookback = 5
+        while minute_lookback <= max_minute_lookback:
+            df_1m = fetch_stock_data(
+                symbol,
+                interval="1m",
+                end=sim_date + timedelta(days=1),
+                days=minute_lookback
+            )
+            if df_1m is not None and not df_1m.empty:
+                df_1m = df_1m.reset_index() if df_1m.index.name else df_1m
+                if "date" in df_1m.columns:
+                    df_1m = df_1m.rename(columns={"date": "timestamp"})
+                df_1m["timestamp"] = pd.to_datetime(df_1m["timestamp"]).dt.tz_localize(None)
+                df_1m["date_only"] = df_1m["timestamp"].dt.normalize()
 
-            df_filtered = df_1m[df_1m["date_only"] == sim_date]
-            if not df_filtered.empty:
-                close = float(df_filtered.sort_values("timestamp")["close"].iloc[-1])
-                logger.debug(f"✅ {symbol} (1m): Close = {close} on {sim_date.date()}")
-                return close
-            else:
-                logger.warning(f"⚠ {symbol} (1m): No data on {sim_date.date()} — fallback to daily")
+                df_filtered = df_1m[df_1m["date_only"] == sim_date]
+                if not df_filtered.empty:
+                    close = float(df_filtered.sort_values("timestamp")["close"].iloc[-1])
+                    logger.debug(f"✅ {symbol} (1m, {minute_lookback}d): Close = {close}")
+                    return close
 
-        # Step 2: Fallback to daily
-        df_day = fetch_stock_data(symbol, interval="day", end=sim_date, days=5)
-        if df_day is not None and not df_day.empty:
-            df_day = df_day.reset_index() if df_day.index.name else df_day
-            if "date" in df_day.columns:
-                df_day["timestamp"] = pd.to_datetime(df_day["date"]).dt.tz_localize(None).dt.normalize()
-            else:
-                df_day["timestamp"] = pd.to_datetime(df_day["timestamp"]).dt.tz_localize(None).dt.normalize()
+            logger.debug(f"⚠ {symbol} (1m): no data in last {minute_lookback}d, expanding lookback")
+            minute_lookback *= 2
 
-            df_day = df_day[df_day["timestamp"] <= sim_date]
+        # Step 2: Fallback to daily with expanding lookback
+        daily_lookback = 5
+        max_daily_lookback = settings.price_fetch_days
+        while daily_lookback <= max_daily_lookback:
+            df_day = fetch_stock_data(
+                symbol,
+                interval="day",
+                end=sim_date,
+                days=daily_lookback
+            )
+            if df_day is not None and not df_day.empty:
+                df_day = df_day.reset_index() if df_day.index.name else df_day
+                # normalize to midnight timestamps
+                if "date" in df_day.columns:
+                    df_day["timestamp"] = (
+                        pd.to_datetime(df_day["date"])
+                          .dt.tz_localize(None)
+                          .dt.normalize()
+                    )
+                else:
+                    df_day["timestamp"] = (
+                        pd.to_datetime(df_day["timestamp"])
+                          .dt.tz_localize(None)
+                          .dt.normalize()
+                    )
 
-            if not df_day.empty:
-                price = float(df_day.sort_values("timestamp")["close"].iloc[-1])
-                logger.success(f"✅ Fallback daily close for {symbol} on {df_day['timestamp'].iloc[-1].date()} = {price}")
-                return price
+                # 🩹 Ensure timestamp column is timezone-naive
+                if isinstance(df_day["timestamp"].dtype, pd.DatetimeTZDtype):
+                    df_day["timestamp"] = df_day["timestamp"].dt.tz_localize(None)
 
-        logger.warning(f"⚠ No usable data for {symbol} as of {sim_date.date()}")
+                # 🩹 Ensure sim_date is timezone-naive
+                if sim_date.tzinfo is not None:
+                    sim_date = sim_date.replace(tzinfo=None)
+
+                # ✅ Now safe to compare
+                df_day = df_day[df_day["timestamp"] <= sim_date]
+
+                if not df_day.empty:
+                    price = float(df_day.sort_values("timestamp")["close"].iloc[-1])
+                    logger.success(
+                        f"✅ Daily close for {symbol} over last {daily_lookback}d = {price}"
+                    )
+                    return price
+
+            logger.debug(f"⚠ {symbol} (day): no data in last {daily_lookback}d, expanding lookback")
+            daily_lookback *= 2
+
+        logger.warning(
+            f"⚠ No usable data for {symbol} after looking back up to {max_daily_lookback} days"
+        )
         return None
 
     except Exception as e:

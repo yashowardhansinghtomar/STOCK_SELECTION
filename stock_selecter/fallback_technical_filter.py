@@ -8,7 +8,7 @@ from datetime import datetime
 def run_technical_filter(threshold=10, return_reasons=False, min_history=30):
     all_features = load_data(settings.feature_table)
     if all_features is None or all_features.empty:
-        logger.warnings("⚠️ No technical features found.")
+        logger.warning("⚠️ No technical features found.")
         return (pd.DataFrame(), {}) if return_reasons else pd.DataFrame()
 
     sim_date = pd.to_datetime(get_simulation_date())
@@ -17,7 +17,7 @@ def run_technical_filter(threshold=10, return_reasons=False, min_history=30):
     df = all_features[all_features["date"] == effective_date].copy()
 
     if df.empty:
-        logger.warnings(f"⚠️ No feature data available for {effective_date}")
+        logger.warning(f"⚠️ No feature data available for {effective_date}")
         return (pd.DataFrame(), {}) if return_reasons else pd.DataFrame()
 
     # Only keep stocks with ≥ min_history rows
@@ -26,7 +26,7 @@ def run_technical_filter(threshold=10, return_reasons=False, min_history=30):
     df = df[df["stock"].isin(sufficient_data_stocks)]
 
     if df.empty:
-        logger.warnings("⚠️ All stocks dropped due to insufficient price history.")
+        logger.warning("⚠️ All stocks dropped due to insufficient price history.")
         return (df, {}) if return_reasons else df
 
     ε = 1e-5  # tiny float tolerance
@@ -53,13 +53,13 @@ def run_technical_filter(threshold=10, return_reasons=False, min_history=30):
     }
 
     if not rejected.empty:
-        logger.warnings("⚠️ Sample rejected stocks with reasons:")
+        logger.warning("⚠️ Sample rejected stocks with reasons:")
         for stock, reason in list(rejected_dict.items())[:10]:
-            logger.warnings(f"{stock}: {reason}")
+            logger.warning(f"{stock}: {reason}")
 
     df = df[cond1 & cond2 & cond3]
     if df.empty:
-        logger.warnings("⚠️ No stocks passed the fallback technical filter.")
+        logger.warning("⚠️ No stocks passed the fallback technical filter.")
         return (df, rejected_dict) if return_reasons else df
 
     result = pd.DataFrame({

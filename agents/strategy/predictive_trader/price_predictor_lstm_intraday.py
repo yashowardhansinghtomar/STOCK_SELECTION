@@ -91,7 +91,7 @@ def predict_intraday_return(ticker):
     scaler_path = os.path.join(MODEL_DIR, f"{ticker}_{MODEL_SUFFIX}_scaler.pkl")
 
     if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-        logger.warnings("❗ Model not found, training now...")
+        logger.warning("❗ Model not found, training now...")
         trained = train_intraday_model(ticker)
         if not trained:
             return None

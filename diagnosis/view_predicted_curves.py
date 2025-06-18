@@ -69,7 +69,7 @@ def evaluate_model(stock=STOCK):
         })
 
     if not results:
-        logger.warnings("⚠️ No evaluatable predictions.")
+        logger.warning("⚠️ No evaluatable predictions.")
         return
 
     result_df = pd.DataFrame(results)

@@ -49,7 +49,7 @@ def train_model_upto(ticker, sim_date, epochs=30):
 
     df = df[df['date'] < sim_date]  # ✅ Only past data
     if len(df) < 100:
-        logger.warnings(f"⚠️ Not enough past data for {ticker} (found {len(df)})")
+        logger.warning(f"⚠️ Not enough past data for {ticker} (found {len(df)})")
         return None
 
     df['close'] = df['close'].ffill()
@@ -83,7 +83,7 @@ def load_model_for_date(ticker, sim_date):
     scaler_path = os.path.join(MODEL_DIR, f"{ticker}_{sim_date}_scaler.pkl")
 
     if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-        logger.warnings(f"❗ Model for {ticker} at {sim_date} not found, training now...")
+        logger.warning(f"❗ Model for {ticker} at {sim_date} not found, training now...")
         train_model_upto(ticker, sim_date)
 
     model = tf.keras.models.load_model(model_path)

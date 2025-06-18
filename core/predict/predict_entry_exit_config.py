@@ -16,7 +16,7 @@ def predict_entry_exit_config(enriched: pd.DataFrame) -> dict:
         return {}
 
     if enriched is None or enriched.empty:
-        logger.warnings("⚠️ Empty features passed to entry_exit_model.")
+        logger.warning("⚠️ Empty features passed to entry_exit_model.")
         return {}
 
     X = enriched[features].fillna(0).replace([np.inf, -np.inf], 0)

@@ -52,7 +52,7 @@ def simulate_and_bootstrap(start="2024-01-01", end="2025-04-01", weekly_only=Fal
         subprocess.run(["python", "rl/train_rl_agent.py", "--freq", "day", "--steps", "1000000"])
         subprocess.run(["python", "rl/train_rl_intraday.py"])
     except Exception as e:
-        logger.warnings(f"RL training failed: {e}")
+        logger.warning(f"RL training failed: {e}")
 
     logger.success("All models trained. O.D.I.N. is now live-ready.")
     logger.start("Updating Memory Agent (final cleanup and summary)...")

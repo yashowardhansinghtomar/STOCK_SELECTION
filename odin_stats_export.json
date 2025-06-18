@@ -1,0 +1,136 @@
+{
+    "buffer_size": 9691,
+    "real_trades": 9691,
+    "top_stocks": [
+        {
+            "stock": "SAIL",
+            "count": 1429
+        },
+        {
+            "stock": "SMCGLOBAL",
+            "count": 444
+        },
+        {
+            "stock": "HBSL",
+            "count": 379
+        },
+        {
+            "stock": "ORIENTPPR",
+            "count": 379
+        },
+        {
+            "stock": "OSWALAGRO",
+            "count": 338
+        },
+        {
+            "stock": "GANESHBE",
+            "count": 316
+        },
+        {
+            "stock": "BALRAMCHIN",
+            "count": 267
+        },
+        {
+            "stock": "FSL",
+            "count": 254
+        },
+        {
+            "stock": "BANARBEADS",
+            "count": 251
+        },
+        {
+            "stock": "TARMAT",
+            "count": 244
+        }
+    ],
+    "reward_trend": [
+        {
+            "date": "2023-01-05",
+            "avg_reward": 0.2797920426877133
+        },
+        {
+            "date": "2023-01-06",
+            "avg_reward": -0.05919918832888362
+        },
+        {
+            "date": "2023-01-09",
+            "avg_reward": -2.1175177005447243
+        },
+        {
+            "date": "2023-01-10",
+            "avg_reward": -0.3148273032842097
+        },
+        {
+            "date": "2023-01-11",
+            "avg_reward": -0.30169607994815895
+        },
+        {
+            "date": "2023-01-12",
+            "avg_reward": -0.20755844017146818
+        },
+        {
+            "date": "2023-01-13",
+            "avg_reward": 0.27683376106008595
+        },
+        {
+            "date": "2023-01-16",
+            "avg_reward": -0.0369844375819477
+        },
+        {
+            "date": "2025-06-18",
+            "avg_reward": -0.13241380770859895
+        },
+        {
+            "date": "2025-06-19",
+            "avg_reward": -0.13241380770859898
+        }
+    ],
+    "rolling_avg_reward_3": -0.10060401766638187,
+    "rolling_avg_reward_5": -0.04650734642210557,
+    "rolling_avg_reward_10": -0.2745984961528791,
+    "top_winrate": [
+        {
+            "stock": "PFIZER",
+            "win_rate": 100.0
+        },
+        {
+            "stock": "ATUL",
+            "win_rate": 81.81818181818181
+        },
+        {
+            "stock": "VINDHYATEL",
+            "win_rate": 71.42857142857143
+        },
+        {
+            "stock": "EKC",
+            "win_rate": 71.42857142857143
+        },
+        {
+            "stock": "BALKRISIND",
+            "win_rate": 71.42857142857143
+        },
+        {
+            "stock": "MOLDTECH",
+            "win_rate": 70.96774193548387
+        },
+        {
+            "stock": "ORIENTBELL",
+            "win_rate": 64.28571428571429
+        },
+        {
+            "stock": "MONARCH",
+            "win_rate": 61.53846153846154
+        },
+        {
+            "stock": "PREMIERPOL",
+            "win_rate": 61.29032258064516
+        },
+        {
+            "stock": "JAICORPLTD",
+            "win_rate": 60.0
+        }
+    ],
+    "total_unique_stocks_traded": 113,
+    "today_trade_count": 2361,
+    "timestamp": "2025-06-19T02:32:22.351764"
+}

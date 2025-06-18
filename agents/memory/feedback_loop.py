@@ -103,7 +103,7 @@ def update_training_data():
         )
 
     if not rows:
-        logger.warnings("⚠️ No matching features for today’s trades.")
+        logger.warning("⚠️ No matching features for today’s trades.")
         return
 
     df = pd.concat(rows, ignore_index=True)

@@ -14,7 +14,6 @@ from db.postgres_manager import run_query
 from services.exit_policy_evaluator import get_exit_probability
 from db.replay_buffer_sql import SQLReplayBuffer  as ReplayBuffer
 from core.feature_engineering.feature_enricher_multi import enrich_multi_interval_features
-from db.replay_buffer_sql import insert_replay_episode
 from core.event_bus import publish_event
 from agents.execution.trade_execution_helper import TradeExecutionHelper
 
@@ -31,7 +30,7 @@ os.makedirs(REPLAY_DIR, exist_ok=True)
 def safe_load_table(name: str, cols: list) -> pd.DataFrame:
     df = load_data(name)
     if df is None:
-        logger.warnings(f"Table '{name}' not found. Using empty DataFrame.")
+        logger.warning(f"Table '{name}' not found. Using empty DataFrame.")
         return pd.DataFrame(columns=cols)
     return df
 
@@ -69,12 +68,23 @@ class ExecutionAgentSQL:
         if "symbol" in df.columns:
             df = df.rename(columns={"symbol": "stock"})
         if "stock" not in df.columns:
-            logger.warnings("Open-positions table missing 'stock'.", prefix=self.prefix)
-            return pd.DataFrame(columns=["stock", "entry_price", "entry_date", "strategy_config"])
-        for col in ("entry_price", "entry_date", "strategy_config"):
+            logger.warning(self.prefix + "Open-positions table missing 'stock'.")
+            # Return an empty frame with all expected columns
+            return pd.DataFrame(columns=[
+                "stock", "entry_price", "entry_date",
+                "sma_short", "sma_long", "rsi_thresh",
+                "strategy_config", "interval"
+            ])
+        # Ensure all fields exist
+        for col in ("entry_price", "entry_date", "quantity", "sma_short", "sma_long", "rsi_thresh", "strategy_config", "interval"):
             if col not in df.columns:
                 df[col] = None
-        return df[["stock", "entry_price", "entry_date", "strategy_config"]]
+        # Preserve all open‐position fields
+        return df[[
+            "stock", "entry_price", "entry_date", "quantity",
+            "sma_short", "sma_long", "rsi_thresh",
+            "strategy_config", "interval"
+        ]]
 
     def load_today_ohlc(self, symbol: str):
         df = fetch_stock_data(symbol, days=1)
@@ -92,7 +102,11 @@ class ExecutionAgentSQL:
 
     def exit_trades(self, open_positions: pd.DataFrame):
         if open_positions.empty:
-            return open_positions.copy(), pd.DataFrame(columns=["timestamp", "stock", "action", "price", "strategy_config", "signal_reason", "source", "imported_at"])
+            return open_positions.copy(), pd.DataFrame(columns=[
+                "timestamp", "stock", "action", "price", "quantity", "profit",
+                "strategy_config", "signal_reason", "source", "imported_at", 
+                "interval"
+            ])
 
         remaining, exited = [], []
         for _, pos in open_positions.iterrows():
@@ -104,24 +118,33 @@ class ExecutionAgentSQL:
             proba = get_exit_probability(pos)
             if proba >= 0.6:
                 logger.success(f"Exiting {sym} (proba={proba:.2f})", prefix=self.prefix)
-                pnl = ohlc[-1] - pos["entry_price"]
+                # per‐share PnL
+                entry_price = float(pos.get("entry_price", 0))
+                pnl_per_share = ohlc[-1] - entry_price
+                # use persisted quantity and compute total profit
+                qty = int(pos.get("quantity", 0))
+                profit = pnl_per_share * qty
                 publish_event("TRADE_CLOSE", {
                     "symbol": sym,
                     "exit_price": ohlc[-1],
-                    "reward": pnl,
-                    "timestamp": self.now_str,
+                    "reward": pnl_per_share,
+                    "timestamp": self.today,
                     "strategy_config": pos.get("strategy_config", {})
                 })
                 exited.append({
-                    "timestamp": self.now_str,
+                    "timestamp": self.today,
                     "stock": sym,
                     "action": "sell",
                     "price": ohlc[-1],
+                    "quantity": qty,
+                    "profit": profit,
                     "strategy_config": pos.get("strategy_config", {}),
+                    "interval": pos.get("interval", "day"),
                     "signal_reason": "ml_exit_high_confidence",
                     "source": "execution_agent",
-                    "imported_at": self.now_str,
+                    "imported_at": datetime.now(),
                 })
+
             elif proba >= 0.4:
                 logger.info(f"{self.prefix}"+str(f"Borderline exit skipped for {sym} (proba={proba:.2f})"))
                 remaining.append(pos)
@@ -167,17 +190,17 @@ class ExecutionAgentSQL:
 
             ohlc = self.load_today_ohlc(sym)
             if not ohlc:
-                logger.warnings(f"Skipping {sym}: OHLC missing.", prefix=self.prefix)
+                logger.warning(self.prefix + f"Skipping {sym}: OHLC missing.")
                 continue
 
             _, _, _, close = ohlc
             if close <= 0:
-                logger.warnings(f"Non-positive price for {sym}: {close}", prefix=self.prefix)
+                logger.warning(self.prefix + f"Non-positive price for {sym}: {close}")
                 continue
 
             qty = int(CAPITAL_PER_TRADE / close)
             if qty < 1:
-                logger.warnings(f"Qty < 1 for {sym} @ {close}.", prefix=self.prefix)
+                logger.warning(f"Qty < 1 for {sym} @ {close}.", prefix=self.prefix)
                 continue
 
             interval = sig.get("interval", "day")
@@ -202,8 +225,9 @@ class ExecutionAgentSQL:
             new_positions.append({
                 "stock": sym,
                 "entry_price": close,
-                "entry_date": self.now_str,
-                "strategy_config": strategy_cfg,
+                "quantity": qty,
+                "entry_date": self.today,
+                "strategy_config": json.dumps(strategy_cfg),
                 "interval": interval
             })
 
@@ -275,7 +299,7 @@ class ExecutionAgentSQL:
                         logger.warning(f"{self.prefix} Replay SQL insert failed for {sym}: {e}")
 
             except Exception as e:
-                logger.warnings(f"{self.prefix}Execution or replay log failed for {sym}: {e}")
+                logger.warning(f"{self.prefix}Execution or replay log failed for {sym}: {e}")
 
         if entry_logs and not self.dry_run:
             insert_with_conflict_handling(pd.DataFrame(entry_logs), TABLE_TRADES)
@@ -320,6 +344,8 @@ class ExecutionAgentSQL:
         open_positions = self.load_open_positions()
         open_positions, exits = self.exit_trades(open_positions)
         if not exits.empty and not self.dry_run:
+            # serialize strategy_config for JSONB
+            exits["strategy_config"] = exits["strategy_config"].apply(json.dumps)
             insert_with_conflict_handling(exits, TABLE_TRADES)
             logger.info(f"{self.prefix}"+str(f"Exited {len(exits)} positions."))
         open_positions = self.enter_trades(signals, open_positions)
@@ -327,9 +353,12 @@ class ExecutionAgentSQL:
             run_query(f'DELETE FROM "{TABLE_OPEN_POS}"', fetchall=False)
         except Exception as e:
             logger.warning(f"Could not clear open positions: {e}", prefix=self.prefix)
-        cols = ["stock", "entry_price", "entry_date", "sma_short", "sma_long", "rsi_thresh", "strategy_config", "interval"]
+        cols = ["stock", "entry_price", "entry_date", "quantity", "sma_short", "sma_long", "rsi_thresh", "strategy_config", "interval"]
         if not open_positions.empty and not self.dry_run:
-            insert_with_conflict_handling(open_positions[cols], TABLE_OPEN_POS)
+            # serialize strategy_config and persist quantity
+            open_write = open_positions.copy()
+            open_write["strategy_config"] = open_write["strategy_config"].apply(json.dumps)
+            insert_with_conflict_handling(open_write[cols], TABLE_OPEN_POS)
             logger.info(f"{self.prefix}"+str(f"{len(open_positions)} open positions saved."))
         else:
             logger.info(f"{self.prefix}"+str("No open positions to save."))

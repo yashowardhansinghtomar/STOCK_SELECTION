@@ -25,7 +25,7 @@ def sanity_check_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(subset=critical_columns)
     df_after_nan_drop = len(df)
     if df_before != df_after_nan_drop:
-        logger.warnings(f"⚠️ Dropped {df_before - df_after_nan_drop} rows due to NaN in critical features.")
+        logger.warning(f"⚠️ Dropped {df_before - df_after_nan_drop} rows due to NaN in critical features.")
 
     for col in critical_columns:
         if col not in ["date", "stock"]:

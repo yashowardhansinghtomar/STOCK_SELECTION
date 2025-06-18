@@ -27,4 +27,4 @@ def log_event(agent: str, module: str, action: str, result: str, meta: dict = No
         insert_dataframe(pd.DataFrame([row]), table_name=TABLE_NAME)
         logger.debug(f"[SYSLOG] {agent}.{module} → {action}: {result}")
     except Exception as e:
-        logger.warnings(f"System log insert failed: {e}")
+        logger.warning(f"System log insert failed: {e}")

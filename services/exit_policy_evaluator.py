@@ -25,7 +25,7 @@ def get_exit_probability(position: dict, default: float = 0.5) -> float:
         entry_date = pd.to_datetime(position["entry_date"], errors="coerce")
         interval = position.get("interval", "day")
         if pd.isna(entry_date):
-            logger.warnings(f"⚠️ Invalid entry_date for {stock}")
+            logger.warning(f"⚠️ Invalid entry_date for {stock}")
             return default
 
         today = pd.to_datetime(get_simulation_date())
@@ -34,7 +34,7 @@ def get_exit_probability(position: dict, default: float = 0.5) -> float:
 
         feats = enrich_multi_interval_features(stock, today, intervals=[interval])
         if feats.empty:
-            logger.warnings(f"⚠️ No features found for {stock} at {interval}")
+            logger.warning(f"⚠️ No features found for {stock} at {interval}")
             return default
 
         model_name = f"exit_classifier_{interval}"
@@ -46,7 +46,7 @@ def get_exit_probability(position: dict, default: float = 0.5) -> float:
         return float(proba)
 
     except Exception as e:
-        logger.warnings(f"⚠️ ML-based exit check failed for {position.get('stock')}: {e}\n{traceback.format_exc()}")
+        logger.warning(f"⚠️ ML-based exit check failed for {position.get('stock')}: {e}\n{traceback.format_exc()}")
         return default
 
 def should_exit_model_based(position: dict, threshold: float = 0.5) -> bool:

@@ -50,7 +50,7 @@ class PlannerAgent:
                 results.append(result)
 
         if not results:
-            logger.warnings("⚠️ No valid strategy results this week. Skipping trade execution.")
+            logger.warning("⚠️ No valid strategy results this week. Skipping trade execution.")
             return
 
         df = pd.DataFrame(results).sort_values(by="sharpe", ascending=False).head(TOP_N)

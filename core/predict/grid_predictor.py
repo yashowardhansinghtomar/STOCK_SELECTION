@@ -14,7 +14,7 @@ def predict_grid_config(stock: str, top_n: int = 3) -> list:
     end_date = get_simulation_date()
     df = fetch_stock_data(stock, end=end_date)
     if df is None or df.empty:
-        logger.warnings(f"⚠️ No price history for {stock}. Aborting grid prediction.")
+        logger.warning(f"⚠️ No price history for {stock}. Aborting grid prediction.")
         return []
 
     rows = run_query("SELECT sma_short, sma_long, rsi_thresh FROM grid_params")
@@ -22,7 +22,7 @@ def predict_grid_config(stock: str, top_n: int = 3) -> list:
     sma_longs = sorted({r[1] for r in rows})
     rsi_thres = sorted({r[2] for r in rows})
     if not (sma_shorts and sma_longs and rsi_thres):
-        logger.warnings("⚠️ grid_params table is empty or malformed.")
+        logger.warning("⚠️ grid_params table is empty or malformed.")
         return []
 
     # Define exit rules to try
@@ -60,7 +60,7 @@ def predict_grid_config(stock: str, top_n: int = 3) -> list:
                             "trade_triggered": 1
                         })
                     except Exception as e:
-                        logger.warnings(f"❌ Backtest failed for {stock}: {e}")
+                        logger.warning(f"❌ Backtest failed for {stock}: {e}")
                         continue
 
     if not results:
@@ -77,7 +77,7 @@ def persist_grid_recommendations(stocks: list[str], top_n: int = 1):
     for stock in stocks:
         recs = predict_grid_config(stock, top_n=top_n)
         if not recs:
-            logger.warnings(f"No grid rec for {stock}; skipping persist.")
+            logger.warning(f"No grid rec for {stock}; skipping persist.")
             continue
 
         for rec in recs:

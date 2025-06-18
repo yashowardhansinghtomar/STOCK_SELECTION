@@ -1,3 +1,5 @@
+# agents/strategy/rl_strategy_agent.py
+
 from core.predict.rl_predictor import load_policy, load_rl_frame
 from core.time_context.time_context import get_simulation_date
 from rl.envs.trading_env import TradingEnv
@@ -8,9 +10,11 @@ from core.logger.logger import logger
 
 
 class RLStrategyAgent:
-    def __init__(self, model_name="ppo_intraday", intervals=None):
+    def __init__(self, model_name="ppo_intraday", intervals=None, today=None):
         self.model_name = model_name
-        self.today = pd.to_datetime(get_simulation_date()).date()
+        # allow overriding the date for live vs. backtest
+        sim_date = today or get_simulation_date()
+        self.today = pd.to_datetime(sim_date).date()
         self.intervals = intervals or ["day", "60minute", "15minute"]
 
     def _evaluate_reward(self, df: pd.DataFrame, model_name: str) -> float:
@@ -29,7 +33,7 @@ class RLStrategyAgent:
 
             return total_reward
         except Exception as e:
-            logger.warnings(f"⚠️ Reward simulation failed: {e}")
+            logger.warning(f"⚠️ Reward simulation failed: {e}")
             return -np.inf
 
     def evaluate(self, stock: str) -> dict | None:
@@ -77,3 +81,18 @@ class RLStrategyAgent:
 
         return best_signal
 
+    def generate_trades(self, stocks: list[str], today=None) -> list[dict]:
+
+        """
+        Wrapper to produce a list of RL signals for bootstrap_trader.
+        Calls evaluate() for each stock and returns only the non-None signals.
+        """
+        # if someone passed today in, override our self.today
+        if today is not None:
+            self.today = pd.to_datetime(today).date()
+        signals = []
+        for s in stocks:
+            sig = self.evaluate(s)
+            if sig is not None:
+                signals.append(sig)
+        return signals

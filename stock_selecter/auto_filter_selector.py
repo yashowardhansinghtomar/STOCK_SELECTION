@@ -39,7 +39,7 @@ def auto_select_filter() -> str:
                 chosen_filter = f
                 break
             else:
-                logger.warnings(f"❌ Filter '{f}' returned only {count} stocks (<{MIN_REQUIRED_STOCKS}).")
+                logger.warning(f"❌ Filter '{f}' returned only {count} stocks (<{MIN_REQUIRED_STOCKS}).")
         else:
             raise RuntimeError(f"🚫 No filter produced ≥{MIN_REQUIRED_STOCKS} stocks.")
     else:
@@ -50,7 +50,7 @@ def auto_select_filter() -> str:
         if len(filtered_df) < MIN_REQUIRED_STOCKS:
             for symbol, reasons in rejected_reasons.items():
                 reason_str = " | ".join(r if isinstance(r, str) else str(r) for r in reasons) if isinstance(reasons, (list, tuple)) else str(reasons)
-                logger.warnings(f"{symbol}: ❌ {reason_str}")
+                logger.warning(f"{symbol}: ❌ {reason_str}")
             raise RuntimeError(f"🚫 Fallback technical filter produced <{MIN_REQUIRED_STOCKS} stocks.")
 
         logger.success(f"✅ Fallback technical filter selected {len(filtered_df)} stocks.")

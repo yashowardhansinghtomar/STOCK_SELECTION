@@ -27,7 +27,7 @@ class ExecutionAgent:
         required_cols = ["stock", "entry_date", "entry_price", "sma_short", "sma_long", "rsi_thresh"]
         df = load_data("open_positions")  # SQLIFIED
         if not all(col in df.columns for col in required_cols):
-            logger.warnings("⚠️ open_positions missing expected columns. Reinitializing.")
+            logger.warning("⚠️ open_positions missing expected columns. Reinitializing.")
             return pd.DataFrame(columns=required_cols)
         return df
 

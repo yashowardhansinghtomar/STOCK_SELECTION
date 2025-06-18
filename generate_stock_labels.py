@@ -14,7 +14,7 @@ def generate_labels():
 
     df = pd.read_csv(TRADES_FILE)
     if df.empty or "stock" not in df:
-        logger.warnings("⚠️ No data in trade logs.")
+        logger.warning("⚠️ No data in trade logs.")
         return
 
     df = df[df["action"] == "sell"].copy()

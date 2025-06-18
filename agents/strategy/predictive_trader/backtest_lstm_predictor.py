@@ -40,7 +40,7 @@ def backtest_lstm_predictor(ticker=TICKER, start_date="2024-01-01", end_date="20
 
         df_future = df[df["date"] > test_date]
         if len(df_future) < FUTURE_OFFSET:
-            logger.warnings(f"⚠️ Not enough future data to calculate return on {test_date.date()}")
+            logger.warning(f"⚠️ Not enough future data to calculate return on {test_date.date()}")
             continue
 
         price_now = df[df["date"] == test_date]["vwap_dev"].values

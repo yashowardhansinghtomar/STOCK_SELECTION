@@ -1,7 +1,7 @@
 # db/models.py
 
 from datetime import datetime, date
-from sqlalchemy import Column, String, Date, DateTime, Float, Integer, BigInteger, Boolean, TIMESTAMP
+from sqlalchemy import Column, String, Date, DateTime, Float, Integer, BigInteger, Boolean, TIMESTAMP, BigInteger, Boolean, JSON, text
 from sqlalchemy.orm import declarative_base
 from core.config.config import settings
 from sqlalchemy.dialects.postgresql import JSONB
@@ -50,7 +50,7 @@ class JointPolicyPrediction(Base):
     enter_prob = Column(Float)
     position_size = Column(Float)
     exit_days = Column(Integer)
-    strategy_config = Column(JSON)
+    strategy_config = Column(JSONB, default={})
     confidence = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -180,11 +180,12 @@ class OpenPosition(Base):
     stock         = Column(String(20), primary_key=True)
     entry_date    = Column(DateTime)
     entry_price   = Column(Float)
+    quantity      = Column(Integer, nullable=False)
     sma_short     = Column(Float)
     sma_long      = Column(Float)
     rsi_thresh    = Column(Float)
-    strategy_config = Column(JSON, default={})
-    interval      = Column(String, default="day")
+    strategy_config  = Column(JSONB, default={})
+    interval         = Column(String, default="day", server_default=text("'day'"))
 
 class PaperTrade(Base):
     __tablename__ = 'paper_trades'
@@ -198,7 +199,7 @@ class PaperTrade(Base):
     imported_at     = Column(DateTime, default=datetime.utcnow)
     signal_reason   = Column(String)
     source          = Column(String)
-    strategy_config = Column(String)
+    strategy_config = Column(JSONB)
     interval        = Column(String, default="day")
 
 class FilterModelPrediction(Base):

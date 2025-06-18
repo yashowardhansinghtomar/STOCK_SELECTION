@@ -3,7 +3,7 @@
 from prefect import flow
 from core.logger.logger import logger
 from core.event_bus import subscribe_to_events
-from db.replay_buffer_sql import insert_replay_episode
+from db.replay_buffer_sql import SQLReplayBuffer
 
 def handle_trade_close(event):
     if event.get("event_type") != "TRADE_CLOSE":
@@ -25,7 +25,7 @@ def handle_trade_close(event):
             "capital_efficiency": float(event.get("capital_efficiency", 0)),
         }
 
-        insert_replay_episode(episode)
+        SQLReplayBuffer()._insert_episode(episode)
         logger.info(f"[FEEDBACK FLOW] Stored replay for {episode['stock']}")
 
     except Exception as e:

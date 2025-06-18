@@ -10,7 +10,7 @@ def check_drift(reference: pd.DataFrame, current: pd.DataFrame, features: list):
 
     drift_detected = result['metrics'][0]['result']['dataset_drift']
     if drift_detected:
-        logger.warnings("🚨 Data drift detected! Immediate retraining recommended.")
+        logger.warning("🚨 Data drift detected! Immediate retraining recommended.")
         return True
     logger.info("✅ No significant data drift detected.")
     return False

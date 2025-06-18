@@ -19,7 +19,7 @@ def clear_all_tables():
             execute_raw_sql(f"DELETE FROM {table}")
             logger.success(f"✅ Cleared: {table}")
         except Exception as e:
-            logger.warnings(f"⚠️ Could not clear {table}: {e}")
+            logger.warning(f"⚠️ Could not clear {table}: {e}")
 
 if __name__ == "__main__":
     clear_all_tables()

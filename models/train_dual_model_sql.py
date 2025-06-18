@@ -83,7 +83,7 @@ def train_dual_model(df_name: str = "training_data"):
     pos_idx = df[df["pred"] == 1].index
 
     if pos_idx.empty:
-        logger.warnings("⚠️ No positive predictions for regressor training. Skipping.")
+        logger.warning("⚠️ No positive predictions for regressor training. Skipping.")
         return
 
     X_reg = X.loc[pos_idx]

@@ -47,7 +47,7 @@ def train_exit_model():
         features = settings.exit_feature_columns
         missing = [f for f in features if f not in df.columns]
         if missing:
-            logger.warnings(f"⚠️ Skipping interval {interval} — missing: {missing}")
+            logger.warning(f"⚠️ Skipping interval {interval} — missing: {missing}")
             continue
 
         X = df[features].fillna(0).replace([float("inf"), float("-inf")], 0)

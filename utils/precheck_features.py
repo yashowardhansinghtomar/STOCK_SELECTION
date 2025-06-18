@@ -17,7 +17,7 @@ def get_model_features():
         _, features = load_model("filter_model")
         return features
     except Exception as e:
-        logger.warnings(f"⚠️ Failed to load filter model: {e}")
+        logger.warning(f"⚠️ Failed to load filter model: {e}")
         return []
 
 from core.data_provider.data_provider import load_data
@@ -26,39 +26,39 @@ def is_feature_usable(stock: str, required_features: list) -> bool:
     try:
         df = load_data(stock)
         if df is None or df.empty:
-            logger.warnings(f"⚠️ {stock}: No data loaded.")
+            logger.warning(f"⚠️ {stock}: No data loaded.")
             return False
 
         df.columns = [col.lower() for col in df.columns]
 
         if "close" not in df.columns or "volume" not in df.columns:
-            logger.warnings(f"⚠️ {stock}: Missing essential columns.")
+            logger.warning(f"⚠️ {stock}: Missing essential columns.")
             return False
 
         # ✅ Must have at least 100 non-null close prices
         if df["close"].dropna().shape[0] < 100:
-            logger.warnings(f"⚠️ {stock}: Not enough close history (<100 days).")
+            logger.warning(f"⚠️ {stock}: Not enough close history (<100 days).")
             return False
 
         # ✅ Must have at least 100 nonzero volume days
         if (df["volume"] <= 0).sum() > 10:  # allow minor zero days, not many
-            logger.warnings(f"⚠️ {stock}: Too many days with zero volume.")
+            logger.warning(f"⚠️ {stock}: Too many days with zero volume.")
             return False
 
         # ✅ Recent trading check (last 30 days)
         if df["close"].tail(30).isna().any():
-            logger.warnings(f"⚠️ {stock}: Missing recent close prices.")
+            logger.warning(f"⚠️ {stock}: Missing recent close prices.")
             return False
         if (df["volume"].tail(30) <= 0).any():
-            logger.warnings(f"⚠️ {stock}: Missing recent trading volume.")
+            logger.warning(f"⚠️ {stock}: Missing recent trading volume.")
             return False
 
         # ✅ Optional: Check indicators if you already have SMA/RSI
         if "sma20" in df.columns and df["sma20"].tail(30).isna().any():
-            logger.warnings(f"⚠️ {stock}: Recent SMA missing.")
+            logger.warning(f"⚠️ {stock}: Recent SMA missing.")
             return False
         if "rsi" in df.columns and df["rsi"].tail(30).isna().any():
-            logger.warnings(f"⚠️ {stock}: Recent RSI missing.")
+            logger.warning(f"⚠️ {stock}: Recent RSI missing.")
             return False
 
         return True

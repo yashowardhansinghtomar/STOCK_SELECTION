@@ -40,7 +40,7 @@ def generate_curves_for_list(ticker_list=STOCK_LIST):
         # 🔮 Predict using trained model
         curve = predict_next_5days_lstm(ticker, simulation_date=sim_date)
         if curve is None:
-            logger.warnings(f"⚠️ Skipping {ticker} - no prediction available.")
+            logger.warning(f"⚠️ Skipping {ticker} - no prediction available.")
             continue
 
         curves.append({
@@ -55,7 +55,7 @@ def generate_curves_for_list(ticker_list=STOCK_LIST):
         })
 
     if not curves:
-        logger.warnings("⚠️ No curves generated.")
+        logger.warning("⚠️ No curves generated.")
         return
 
     df = pd.DataFrame(curves)
@@ -73,7 +73,7 @@ def generate_curves_for_list(ticker_list=STOCK_LIST):
     try:
         run_query(f"DELETE FROM {CURVE_TABLE} WHERE timestamp = '{sim_date}'")
     except Exception as e:
-        logger.warnings(f"⚠️ Could not delete old curves: {e}")
+        logger.warning(f"⚠️ Could not delete old curves: {e}")
 
     # 💾 Insert new curves
     insert_dataframe(df, CURVE_TABLE, if_exists="append")

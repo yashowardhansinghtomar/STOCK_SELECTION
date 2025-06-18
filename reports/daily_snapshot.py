@@ -12,7 +12,7 @@ TABLE_NAME = settings.trades_table
 def compute_snapshot(start_date=None, end_date=None):
     df = load_data(TABLE_NAME)
     if df is None or df.empty:
-        logger.warnings("No trade data found for snapshot.")
+        logger.warning("No trade data found for snapshot.")
         return None
 
     df["imported_at"] = pd.to_datetime(df["imported_at"])
@@ -28,7 +28,7 @@ def compute_snapshot(start_date=None, end_date=None):
     df_window = df[mask].copy()
 
     if df_window.empty:
-        logger.warnings("No trades in selected window.")
+        logger.warning("No trades in selected window.")
         return None
 
     trade_count = len(df_window)

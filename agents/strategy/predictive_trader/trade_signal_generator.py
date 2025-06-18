@@ -72,7 +72,7 @@ def generate_signals_for_list(ticker_list):
         insert_dataframe(df, "predicted_signals", if_exists="append")
         logger.success(f"✅ {len(signals)} signals saved to predicted_signals.")
     else:
-        logger.warnings("⚠️ No signals generated.")
+        logger.warning("⚠️ No signals generated.")
 
 if __name__ == "__main__":
     generate_signals_for_list(["RELIANCE", "TCS", "INFY"])

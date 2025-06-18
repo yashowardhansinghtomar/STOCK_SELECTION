@@ -24,9 +24,9 @@ def get_connection():
                         WAL_ENABLED = True
                         logger.info("✅ WAL mode enabled")
                     else:
-                        logger.warnings(f"⚠️ WAL not enabled, current mode: {mode}")
+                        logger.warning(f"⚠️ WAL not enabled, current mode: {mode}")
                 except Exception as e:
-                    logger.warnings(f"⚠️ Could not enable WAL: {e}")
+                    logger.warning(f"⚠️ Could not enable WAL: {e}")
 
             conn.execute("PRAGMA synchronous = NORMAL;")
             conn.execute("PRAGMA temp_store = MEMORY;")
@@ -35,7 +35,7 @@ def get_connection():
 
         except sqlite3.OperationalError as e:
             if "database is locked" in str(e).lower():
-                logger.warnings("🔒 DB locked during connect – retrying in 5s...")
+                logger.warning("🔒 DB locked during connect – retrying in 5s...")
                 time.sleep(5)
             else:
                 logger.error(f"❌ Unexpected DB error: {e}")
@@ -62,7 +62,7 @@ def insert_dataframe(df, table, if_exists="append", max_retries=5):
         except sqlite3.OperationalError as e:
             if "database is locked" in str(e).lower():
                 wait = 2 ** attempt
-                logger.warnings(f"🔁 DB locked – retrying in {wait}s (attempt {attempt + 1})")
+                logger.warning(f"🔁 DB locked – retrying in {wait}s (attempt {attempt + 1})")
                 time.sleep(wait)
             else:
                 logger.error(f"❌ SQLite error during insert: {e}")
@@ -71,7 +71,7 @@ def insert_dataframe(df, table, if_exists="append", max_retries=5):
             try:
                 conn.close()
             except:
-                logger.warnings("⚠️ Failed to close DB connection after insert attempt.")
+                logger.warning("⚠️ Failed to close DB connection after insert attempt.")
     logger.error(f"❌ Failed to insert into {table} after {max_retries} retries.")
 
 # --- Read entire table ---

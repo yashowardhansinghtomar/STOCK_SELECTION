@@ -43,7 +43,7 @@ def train_meta_model():
     y = df[target]
 
     if len(X) < settings.meta_min_samples:
-        logger.warnings("[SKIP] Not enough samples to train meta model.")
+        logger.warning("[SKIP] Not enough samples to train meta model.")
         return
 
     # Train/test split

@@ -32,9 +32,9 @@ def prefill_all():
                 if df is not None and not df.empty:
                     logger.success(f"✅ {sym} [{interval}] → {len(df)} rows")
                 else:
-                    logger.warnings(f"⚠️ {sym} [{interval}] → No data")
+                    logger.warning(f"⚠️ {sym} [{interval}] → No data")
             except Exception as e:
-                logger.warnings(f"❌ {sym} [{interval}] failed: {e}")
+                logger.warning(f"❌ {sym} [{interval}] failed: {e}")
 
     logger.success("🎯 Done pre-filling price history.")
 
